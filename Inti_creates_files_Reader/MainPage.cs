@@ -31,6 +31,7 @@ namespace Inti_creates_files_Reader
         private string currentFilePath = "";
         private bool isPaused = false;
         private readonly System.Windows.Forms.Timer filterTimer = new System.Windows.Forms.Timer();
+        private string currentSearch = "";
 
 
         public MainPage()
@@ -353,7 +354,10 @@ namespace Inti_creates_files_Reader
             root.Tag = folderPath;
             AddFolderNodes(root, folderPath);
             FolderTree.Nodes.Add(root);
-            root.Expand();
+            if (!string.IsNullOrWhiteSpace(currentSearch))
+                root.ExpandAll();
+            else
+                root.Expand();
 
             FolderTree.EndUpdate();
         }
@@ -412,6 +416,13 @@ namespace Inti_creates_files_Reader
                         return false;
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(currentSearch))
+            {
+                if (!fileName.Contains(currentSearch, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
             return true;
         }
 
@@ -437,10 +448,27 @@ namespace Inti_creates_files_Reader
             ApplyFilter();
         }
 
+        private void searchTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                filterTimer.Stop();
+                ApplyFilter();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+            else
+            {
+                filterTimer.Stop();
+                filterTimer.Start();
+            }
+        }
+
         private void ApplyFilter()
         {
             Properties.Settings.Default.fileFilter = filterTextBox.Text;
             Properties.Settings.Default.Save();
+            currentSearch = searchTextBox.Text.Trim();
             if (!string.IsNullOrEmpty(Properties.Settings.Default.pathDir) && Directory.Exists(Properties.Settings.Default.pathDir))
                 LoadFolder(Properties.Settings.Default.pathDir);
         }

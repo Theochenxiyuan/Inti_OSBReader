@@ -54,6 +54,7 @@
             mainSplitContainer = new SplitContainer();
             FolderTree = new TreeView();
             filterTextBox = new TextBox();
+            searchTextBox = new TextBox();
             contentSplitContainer = new SplitContainer();
             AnimationList = new ListView();
             Animation = new ColumnHeader();
@@ -284,6 +285,7 @@
             // mainSplitContainer.Panel1
             //
             mainSplitContainer.Panel1.Controls.Add(FolderTree);
+            mainSplitContainer.Panel1.Controls.Add(searchTextBox);
             mainSplitContainer.Panel1.Controls.Add(filterTextBox);
             //
             // mainSplitContainer.Panel2
@@ -311,6 +313,14 @@
             filterTextBox.PlaceholderText = "Filter (e.g. _pal,_ex_pal)";
             filterTextBox.TabIndex = 1;
             filterTextBox.KeyDown += filterTextBox_KeyDown;
+            //
+            // searchTextBox
+            //
+            searchTextBox.Dock = DockStyle.Top;
+            searchTextBox.Name = "searchTextBox";
+            searchTextBox.PlaceholderText = "Search (show only matching)";
+            searchTextBox.TabIndex = 2;
+            searchTextBox.KeyDown += searchTextBox_KeyDown;
             //
             // contentSplitContainer
             //
@@ -661,6 +671,7 @@
         private SplitContainer mainSplitContainer;
         private TreeView FolderTree;
         private TextBox filterTextBox;
+        private TextBox searchTextBox;
         private SplitContainer contentSplitContainer;
         private ListView AnimationList;
         public ColumnHeader Animation;
