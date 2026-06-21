@@ -5,6 +5,12 @@
     <Setting Name="pathDir" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="recentFiles" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="recentFolders" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
     <Setting Name="PathSave" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>

@@ -303,7 +303,7 @@ namespace Inti_creates_files_Reader
             }
             headerDoc(folder + "_header.txt");
             
-            pltsDoc(folder + "_ColoerPalettes.txt");
+            pltsDoc(folder + "_ColorPalettes.txt");
             spriteDoc(folder + "_SpriteSheet.txt");
             
         }

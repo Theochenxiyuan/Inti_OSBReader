@@ -23,11 +23,16 @@ namespace Inti_creates_files_Reader
         private int pltIndex;
         private int animationIndex;
         private System.Windows.Forms.Timer animationTimer = new System.Windows.Forms.Timer();
-        private Image frame;
+        private Image? frame;
         private int frameIndex;
         private DateTime startTime;
+        private readonly string[] readableExtensions = { ".osb", ".scb" };
+        private const int MaxRecentFiles = 10;
+        private string currentFilePath = "";
+
 
         public MainPage()
+
         {
             InitializeComponent();
             obj = new OSB("");
@@ -42,9 +47,12 @@ namespace Inti_creates_files_Reader
             pic.Image = null;
             pic.SizeMode = PictureBoxSizeMode.Normal;
             pic.Paint += pic_Paint;
-
-
+            SetControlsEnabled(false);
+            UpdateStatusBar();
+            BuildRecentFilesMenu();
+            BuildRecentFoldersMenu();
         }
+
         private void Bopen_Click(object sender, EventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -55,39 +63,332 @@ namespace Inti_creates_files_Reader
             {
                 Properties.Settings.Default.pathOpen = Path.GetDirectoryName(dialog.FileName);
                 Properties.Settings.Default.Save();
-                AnimationList.Items.Clear();
-                Lpalletecount.Text = "0 out of 0";
-                pltIndex = -1;
-                picPalatte.Image = null;
-                pic.Image = null;
-                frameIndex = 0;
-                frame = null;
-                animationIndex = 0;
-
-                obj = new OSB(dialog.FileName);
-                obj.readData();
-                if (obj.isOSB())
-                {
-                    for (int i = 0; i < obj.animations.Count(); i++)
-                    {
-                        ListViewItem item = new ListViewItem("Animation " + (i + 1));
-                        AnimationList.Items.Add(item);
-                    }
-                }
-                else spriteSheetToolStripMenuItem_Click(spriteSheetToolStripMenuItem, EventArgs.Empty);
-
-
-
-                if (obj.plts.Size() != 0)
-                {
-                    pltIndex = -1;
-                    displayPallete(obj.plts.getPalette(pltIndex));
-                    Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
-                }
-                Lfile.Text = "File: " + obj.getName();
+                LoadFile(dialog.FileName);
 
             }
         }
+
+        private void openFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folder = new FolderBrowserDialog();
+            folder.InitialDirectory = Directory.Exists(Properties.Settings.Default.pathDir) ? Properties.Settings.Default.pathDir : Properties.Settings.Default.pathOpen;
+
+            if (folder.ShowDialog() == DialogResult.OK)
+            {
+                Properties.Settings.Default.pathDir = folder.SelectedPath;
+                Properties.Settings.Default.pathOpen = folder.SelectedPath;
+                Properties.Settings.Default.Save();
+                LoadFolder(folder.SelectedPath);
+                AddRecentFolder(folder.SelectedPath);
+            }
+        }
+
+        private void LoadFile(string fileName)
+        {
+            currentFilePath = fileName;
+            animationTimer.Stop();
+            AnimationList.Items.Clear();
+            Lpalletecount.Text = "0 out of 0";
+            pltIndex = -1;
+            picPalatte.Image = null;
+            pic.Image = null;
+            frameIndex = 0;
+            frame = null;
+            animationIndex = 0;
+            TcurrFrame.Text = "";
+
+            obj = new OSB(fileName);
+            obj.readData();
+            if (obj.isOSB())
+            {
+                for (int i = 0; i < obj.animations.Count(); i++)
+                {
+                    ListViewItem item = new ListViewItem("Animation " + (i + 1));
+                    AnimationList.Items.Add(item);
+                }
+                AnimationList_SizeChanged(AnimationList, EventArgs.Empty);
+
+                if (AnimationList.Items.Count > 0)
+                {
+                    AnimationList.Items[0].Selected = true;
+                    AnimationList.Items[0].Focused = true;
+                    AnimationList.Select();
+                    PlayAnimation(0);
+                }
+
+            }
+            else spriteSheetToolStripMenuItem_Click(spriteSheetToolStripMenuItem, EventArgs.Empty);
+
+            if (obj.plts.Size() != 0)
+            {
+                pltIndex = -1;
+                displayPallete(obj.plts.getPalette(pltIndex));
+                Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
+            }
+            Lfile.Text = "File: " + obj.getName();
+            Text = obj.getName() + " - Inti OSB Reader";
+            SetControlsEnabled(true);
+            UpdateStatusBar();
+            AddRecentFile(fileName);
+        }
+
+        private void AddRecentFile(string fileName)
+        {
+            var recent = GetRecentFiles();
+            recent.RemoveAll(path => path.Equals(fileName, StringComparison.OrdinalIgnoreCase));
+            recent.Insert(0, fileName);
+            if (recent.Count > MaxRecentFiles)
+                recent.RemoveRange(MaxRecentFiles, recent.Count - MaxRecentFiles);
+
+            Properties.Settings.Default.recentFiles = string.Join("|", recent);
+            Properties.Settings.Default.Save();
+            BuildRecentFilesMenu();
+        }
+
+        private List<string> GetRecentFiles()
+        {
+            string stored = Properties.Settings.Default.recentFiles;
+            if (string.IsNullOrEmpty(stored)) return new List<string>();
+            return stored.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+        private void BuildRecentFilesMenu()
+        {
+            recentFilesToolStripMenuItem.DropDownItems.Clear();
+            var recent = GetRecentFiles();
+            if (recent.Count == 0)
+            {
+                recentFilesToolStripMenuItem.Enabled = false;
+                return;
+            }
+
+            recentFilesToolStripMenuItem.Enabled = true;
+            foreach (string path in recent)
+            {
+                string display = path;
+                if (display.Length > 60)
+                    display = "..." + display.Substring(display.Length - 57);
+
+                ToolStripMenuItem item = new ToolStripMenuItem(display);
+                item.ToolTipText = path;
+                item.Click += (sender, e) =>
+                {
+                    if (File.Exists(path))
+                    {
+                        Properties.Settings.Default.pathOpen = Path.GetDirectoryName(path);
+                        Properties.Settings.Default.Save();
+                        LoadFile(path);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"File not found:\n{path}", "Recent File", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        var list = GetRecentFiles();
+                        list.RemoveAll(p => p.Equals(path, StringComparison.OrdinalIgnoreCase));
+                        Properties.Settings.Default.recentFiles = string.Join("|", list);
+                        Properties.Settings.Default.Save();
+                        BuildRecentFilesMenu();
+                    }
+                };
+                recentFilesToolStripMenuItem.DropDownItems.Add(item);
+            }
+
+            recentFilesToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            ToolStripMenuItem clearItem = new ToolStripMenuItem("Clear Recent Files");
+            clearItem.Click += (sender, e) =>
+            {
+                Properties.Settings.Default.recentFiles = "";
+                Properties.Settings.Default.Save();
+                BuildRecentFilesMenu();
+            };
+            recentFilesToolStripMenuItem.DropDownItems.Add(clearItem);
+        }
+
+        private void AddRecentFolder(string folderPath)
+        {
+            var recent = GetRecentFolders();
+            recent.RemoveAll(path => path.Equals(folderPath, StringComparison.OrdinalIgnoreCase));
+            recent.Insert(0, folderPath);
+            if (recent.Count > MaxRecentFiles)
+                recent.RemoveRange(MaxRecentFiles, recent.Count - MaxRecentFiles);
+
+            Properties.Settings.Default.recentFolders = string.Join("|", recent);
+            Properties.Settings.Default.Save();
+            BuildRecentFoldersMenu();
+        }
+
+        private List<string> GetRecentFolders()
+        {
+            string stored = Properties.Settings.Default.recentFolders;
+            if (string.IsNullOrEmpty(stored)) return new List<string>();
+            return stored.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+        private void BuildRecentFoldersMenu()
+        {
+            recentFoldersToolStripMenuItem.DropDownItems.Clear();
+            var recent = GetRecentFolders();
+            if (recent.Count == 0)
+            {
+                recentFoldersToolStripMenuItem.Enabled = false;
+                return;
+            }
+
+            recentFoldersToolStripMenuItem.Enabled = true;
+            foreach (string path in recent)
+            {
+                string display = path;
+                if (display.Length > 60)
+                    display = "..." + display.Substring(display.Length - 57);
+
+                ToolStripMenuItem item = new ToolStripMenuItem(display);
+                item.ToolTipText = path;
+                item.Click += (sender, e) =>
+                {
+                    if (Directory.Exists(path))
+                    {
+                        Properties.Settings.Default.pathDir = path;
+                        Properties.Settings.Default.pathOpen = path;
+                        Properties.Settings.Default.Save();
+                        LoadFolder(path);
+                        AddRecentFolder(path);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Folder not found:\n{path}", "Recent Folder", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        var list = GetRecentFolders();
+                        list.RemoveAll(p => p.Equals(path, StringComparison.OrdinalIgnoreCase));
+                        Properties.Settings.Default.recentFolders = string.Join("|", list);
+                        Properties.Settings.Default.Save();
+                        BuildRecentFoldersMenu();
+                    }
+                };
+                recentFoldersToolStripMenuItem.DropDownItems.Add(item);
+            }
+
+            recentFoldersToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+            ToolStripMenuItem clearItem = new ToolStripMenuItem("Clear Recent Folders");
+            clearItem.Click += (sender, e) =>
+            {
+                Properties.Settings.Default.recentFolders = "";
+                Properties.Settings.Default.Save();
+                BuildRecentFoldersMenu();
+            };
+            recentFoldersToolStripMenuItem.DropDownItems.Add(clearItem);
+        }
+
+        private void SetControlsEnabled(bool enabled)
+        {
+            saveAllPaletteToolStripMenuItem.Enabled = enabled;
+            saveToolStripMenuItem.Enabled = enabled;
+            spriteSheetToolStripMenuItem.Enabled = enabled;
+            BleftPalette.Enabled = enabled;
+            BrightPalette.Enabled = enabled;
+            Flip.Enabled = enabled;
+            RefreshAnimation.Enabled = enabled;
+            Tspeed.Enabled = enabled;
+        }
+
+        private void UpdateStatusBar()
+        {
+            if (obj == null || string.IsNullOrEmpty(obj.name))
+            {
+                statusLabel.Text = "Ready";
+                return;
+            }
+
+            string animCount = obj.isOSB() ? obj.animations.Count.ToString() : "0";
+            string frameCount = obj.frames != null ? obj.frames.Size().ToString() : "0";
+            string pltCount = obj.plts != null ? obj.plts.Size().ToString() : "0";
+            statusLabel.Text = $"{obj.name} | Animations: {animCount} | Frames: {frameCount} | Palettes: {pltCount}";
+        }
+
+
+        private void LoadFolder(string folderPath)
+        {
+            FolderTree.BeginUpdate();
+            FolderTree.Nodes.Clear();
+
+            string rootName = Path.GetFileName(folderPath.TrimEnd(Path.DirectorySeparatorChar));
+            if (string.IsNullOrEmpty(rootName)) rootName = folderPath;
+            TreeNode root = new TreeNode(rootName);
+            root.Tag = folderPath;
+            AddFolderNodes(root, folderPath);
+            FolderTree.Nodes.Add(root);
+            root.Expand();
+
+            FolderTree.EndUpdate();
+        }
+
+        private bool AddFolderNodes(TreeNode parent, string folderPath)
+        {
+            bool hasReadableFiles = false;
+
+            try
+            {
+                foreach (string directory in Directory.EnumerateDirectories(folderPath).OrderBy(Path.GetFileName))
+                {
+                    TreeNode directoryNode = new TreeNode(Path.GetFileName(directory));
+                    directoryNode.Tag = directory;
+                    directoryNode.ForeColor = Color.DarkSlateGray;
+                    if (AddFolderNodes(directoryNode, directory))
+                    {
+                        parent.Nodes.Add(directoryNode);
+                        hasReadableFiles = true;
+                    }
+                }
+
+                foreach (string file in Directory.EnumerateFiles(folderPath).Where(IsReadableFile).OrderBy(Path.GetFileName))
+                {
+                    TreeNode fileNode = new TreeNode(Path.GetFileName(file));
+                    fileNode.Tag = file;
+                    fileNode.ForeColor = SystemColors.WindowText;
+                    parent.Nodes.Add(fileNode);
+                    hasReadableFiles = true;
+                }
+
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+            catch (IOException)
+            {
+            }
+
+            return hasReadableFiles;
+        }
+
+        private bool IsReadableFile(string filePath)
+        {
+            return readableExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private void FolderTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            TryLoadSelectedNode(e.Node);
+        }
+
+        private void FolderTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                TryLoadSelectedNode(FolderTree.SelectedNode);
+                e.Handled = true;
+            }
+        }
+
+        private void TryLoadSelectedNode(TreeNode? node)
+        {
+            if (node == null) return;
+            string? filePath = node.Tag as string;
+            if (filePath == null || Directory.Exists(filePath)) return;
+            if (filePath.Equals(currentFilePath, StringComparison.OrdinalIgnoreCase)) return;
+
+            Properties.Settings.Default.pathOpen = Path.GetDirectoryName(filePath);
+            Properties.Settings.Default.Save();
+            LoadFile(filePath);
+        }
+
+
 
         private void openColorPaletteToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -117,14 +418,24 @@ namespace Inti_creates_files_Reader
         private void AnimationList_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             if (!e.IsSelected) return;
+            PlayAnimation(e.ItemIndex);
+        }
 
+        private void AnimationList_SizeChanged(object sender, EventArgs e)
+        {
+            Animation.Width = Math.Max(20, AnimationList.ClientSize.Width - 4);
+        }
+
+        private void PlayAnimation(int index)
+        {
             animationTimer.Stop();
             pic.Image = null;
 
-            animationIndex = e.ItemIndex;
+            animationIndex = index;
             frameIndex = 0;
 
             startTime = DateTime.Now;
+            RenderCurrentFrame();
 
             animationTimer.Interval = 10;
 
@@ -166,10 +477,26 @@ namespace Inti_creates_files_Reader
             if (obj.animations[animationIndex].getFrame(frameIndex) >= obj.frames.Size() || obj.animations[animationIndex].getFrame(frameIndex) < 0)
                 return;
 
+            RenderCurrentFrame();
+        }
+
+        private void RenderCurrentFrame()
+        {
+            if (animationIndex < 0 || animationIndex >= obj.animations.Count || obj.animations[animationIndex].Size() == 0)
+                return;
+
+            if (frameIndex < 0 || frameIndex >= obj.animations[animationIndex].Size())
+                return;
+
+            int sourceFrame = obj.animations[animationIndex].getFrame(frameIndex);
+            if (sourceFrame >= obj.frames.Size() || sourceFrame < 0)
+                return;
+
             TcurrFrame.Text = obj.animations[animationIndex].getFrame(frameIndex).ToString();
-            frame = obj.getFrameCentered(animationIndex, obj.animations[animationIndex].getFrame(frameIndex), pltIndex);
+            frame = obj.getFrameCentered(animationIndex, sourceFrame, pltIndex);
 
             pic.Invalidate();
+            pic.Update();
         }
 
         private void pic_Paint(object sender, PaintEventArgs e)
@@ -225,6 +552,7 @@ namespace Inti_creates_files_Reader
 
                 displayPallete(obj.plts.getPalette(pltIndex));
                 Lpalletecount.Text = (pltIndex + 1) + " out of " + num;
+                RenderCurrentFrame();
             }
         }
 
@@ -238,7 +566,13 @@ namespace Inti_creates_files_Reader
 
                 displayPallete(obj.plts.getPalette(pltIndex));
                 Lpalletecount.Text = (pltIndex + 1) + " out of " + num;
+                RenderCurrentFrame();
             }
+        }
+
+        private void RefreshAnimation_Click(object sender, EventArgs e)
+        {
+            RenderCurrentFrame();
         }
 
         private void displayPallete(Bitmap oplt)
@@ -248,13 +582,12 @@ namespace Inti_creates_files_Reader
             Bitmap plt = new Bitmap(picPalatte.Width, picPalatte.Height);
             using (Graphics graphics = Graphics.FromImage(plt))
             {
-                Brush brush;
                 for (int y = 0; y < oplt.Height; y++)
                 {
                     for (int x = 0; x < oplt.Width; x++)
                     {
-                        brush = new SolidBrush(oplt.GetPixel(x, y));
-                        graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
+                        using (Brush brush = new SolidBrush(oplt.GetPixel(x, y)))
+                            graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
                     }
                 }
                 picPalatte.Image = plt;
@@ -346,7 +679,7 @@ namespace Inti_creates_files_Reader
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.InitialDirectory = Properties.Settings.Default.PathSave;
-            saveFileDialog.FileName = obj.name + "_ColoerPalettes.txt";
+            saveFileDialog.FileName = obj.name + "_ColorPalettes.txt";
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -445,7 +778,7 @@ namespace Inti_creates_files_Reader
 
                     for (int i = 0; i < obj.plts.Size(); i++)
                     {
-                        obj.plts.getPalette(i).Save(folder.SelectedPath + obj.name + "_palette_" + (i + 1) + ".png");
+                        obj.plts.getPalette(i).Save(Path.Combine(folder.SelectedPath, obj.name + "_palette_" + (i + 1) + ".png"));
                     }
                 }
             }
@@ -510,7 +843,7 @@ namespace Inti_creates_files_Reader
         private void Flip_Click(object sender, EventArgs e)
         {
             obj.frames.FlipO();
-            pic.Invalidate();
+            RenderCurrentFrame();
         }
     }
 }

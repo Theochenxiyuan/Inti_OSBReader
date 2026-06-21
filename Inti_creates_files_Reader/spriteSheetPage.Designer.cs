@@ -108,7 +108,7 @@ namespace Inti_creates_files_Reader
             Lpallete.Name = "Lpallete";
             Lpallete.Size = new Size(45, 15);
             Lpallete.TabIndex = 101;
-            Lpallete.Text = "Pallete:";
+            Lpallete.Text = "Palette:";
             // 
             // picPalatte
             // 
@@ -187,7 +187,7 @@ namespace Inti_creates_files_Reader
             // spriteSheetToolStripMenuItem
             // 
             spriteSheetToolStripMenuItem.Name = "spriteSheetToolStripMenuItem";
-            spriteSheetToolStripMenuItem.ShortcutKeyDisplayString = "Ctrtl+S";
+            spriteSheetToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+S";
             spriteSheetToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
             spriteSheetToolStripMenuItem.Size = new Size(282, 22);
             spriteSheetToolStripMenuItem.Text = "SpriteSheet";

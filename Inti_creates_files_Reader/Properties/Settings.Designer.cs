@@ -38,6 +38,30 @@ namespace Inti_creates_files_Reader.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string recentFiles {
+            get {
+                return ((string)(this["recentFiles"]));
+            }
+            set {
+                this["recentFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string recentFolders {
+            get {
+                return ((string)(this["recentFolders"]));
+            }
+            set {
+                this["recentFolders"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string PathSave {
             get {
                 return ((string)(this["PathSave"]));

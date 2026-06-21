@@ -204,13 +204,12 @@ namespace Inti_creates_files_Reader
             Bitmap plt = new Bitmap(picPalatte.Width, picPalatte.Height);
             using (Graphics graphics = Graphics.FromImage(plt))
             {
-                Brush brush;
                 for (int y = 0; y < oplt.Height; y++)
                 {
                     for (int x = 0; x < oplt.Width; x++)
                     {
-                        brush = new SolidBrush(oplt.GetPixel(x, y));
-                        graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
+                        using (Brush brush = new SolidBrush(oplt.GetPixel(x, y)))
+                            graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
                     }
                 }
                 picPalatte.Image = plt;
@@ -359,7 +358,7 @@ namespace Inti_creates_files_Reader
 
                     for (int i = 0; i < obj.plts.Size(); i++)
                     {
-                        obj.plts.getPalette(i).Save(folder.SelectedPath + obj.name + "_palette_" + (i + 1) + ".png");
+                        obj.plts.getPalette(i).Save(Path.Combine(folder.SelectedPath, obj.name + "_palette_" + (i + 1) + ".png"));
                     }
                 }
             }
