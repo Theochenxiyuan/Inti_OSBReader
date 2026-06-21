@@ -52,11 +52,21 @@ The original decryption workflow still applies:
 
 ## Build
 
-```
-dotnet publish Inti_creates_files_Reader\Inti_creates_files_Reader.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+Local release build:
+
+```powershell
+.\publish.ps1
 ```
 
-The executable will be at:
+Or directly:
+
+```
+dotnet publish Inti_creates_files_Reader\Inti_creates_files_Reader.csproj -c Release -p:PublishProfile=Release
+```
+
+The self-contained executable will be at:
 ```
 Inti_creates_files_Reader\bin\Release\net8.0-windows\win-x64\publish\Inti_creates_files_Reader.exe
 ```
+
+`dotnet build` can still be used for development; it produces a small framework-dependent build in `Inti_creates_files_Reader\bin\Release\net8.0-windows`.

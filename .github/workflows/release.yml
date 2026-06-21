@@ -20,10 +20,12 @@ jobs:
           dotnet-version: "8.x"
 
       - name: Publish
-        run: dotnet publish "Inti_creates_files_Reader/Inti_creates_files_Reader.csproj" -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+        run: dotnet publish "Inti_creates_files_Reader/Inti_creates_files_Reader.csproj" -c Release -p:PublishProfile=Release
 
       - name: Zip publish folder
-        run: Compress-Archive -Path "Inti_creates_files_Reader\bin\Release\net8.0-windows\win-x64\publish\*" -DestinationPath "Inti_OSBReader_win-x64.zip"
+        run: |
+          $files = Get-ChildItem -Path "Inti_creates_files_Reader\bin\Release\net8.0-windows\win-x64\publish" | Where-Object { $_.Extension -ne '.pdb' }
+          Compress-Archive -Path $files.FullName -DestinationPath "Inti_OSBReader_win-x64.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
