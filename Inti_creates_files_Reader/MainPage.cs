@@ -32,7 +32,7 @@ namespace Inti_creates_files_Reader
         private bool isPaused = false;
         private readonly System.Windows.Forms.Timer filterTimer = new System.Windows.Forms.Timer();
         private string currentSearch = "";
-        private string externalPalettePath = "";
+        private Dictionary<string, string> externalPaletteMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 
         public MainPage()
@@ -74,7 +74,7 @@ namespace Inti_creates_files_Reader
             BuildRecentFoldersMenu();
             Lpalletecount.Text = "—";
             filterTextBox.Text = Properties.Settings.Default.fileFilter;
-            externalPalettePath = Properties.Settings.Default.externalPalettePath;
+            LoadExternalPaletteMap();
             filterTimer.Interval = 500;
             filterTimer.Tick += filterTimer_Tick;
             AllowDrop = true;
@@ -159,8 +159,9 @@ namespace Inti_creates_files_Reader
                 Lpalletecount.Text = "—";
             }
 
-            if (!string.IsNullOrEmpty(externalPalettePath) && File.Exists(externalPalettePath))
-                ApplyExternalPalette(externalPalettePath);
+            string palPath = GetCurrentExternalPalette();
+            if (!string.IsNullOrEmpty(palPath) && File.Exists(palPath))
+                ApplyExternalPalette(palPath);
 
             UpdatePaletteSourceLabel();
             Text = obj.getName() + " - Inti OSB Reader";
@@ -512,10 +513,8 @@ namespace Inti_creates_files_Reader
             {
                 Properties.Settings.Default.pathOpen = Path.GetDirectoryName(dialog.FileName);
                 Properties.Settings.Default.Save();
-                externalPalettePath = dialog.FileName;
-                Properties.Settings.Default.externalPalettePath = externalPalettePath;
-                Properties.Settings.Default.Save();
-                ApplyExternalPalette(externalPalettePath);
+                SetExternalPaletteForCurrentFile(dialog.FileName);
+                ApplyExternalPalette(dialog.FileName);
                 UpdatePaletteSourceLabel();
             }
         }
@@ -527,9 +526,7 @@ namespace Inti_creates_files_Reader
 
         private void BclearPalette_Click(object sender, EventArgs e)
         {
-            externalPalettePath = "";
-            Properties.Settings.Default.externalPalettePath = "";
-            Properties.Settings.Default.Save();
+            RemoveExternalPaletteForCurrentFile();
             UpdatePaletteSourceLabel();
         }
 
@@ -552,10 +549,55 @@ namespace Inti_creates_files_Reader
 
         private void UpdatePaletteSourceLabel()
         {
-            if (!string.IsNullOrEmpty(externalPalettePath) && File.Exists(externalPalettePath))
-                LpaletteSource.Text = "Palette: " + Path.GetFileName(externalPalettePath);
+            string palPath = GetCurrentExternalPalette();
+            if (!string.IsNullOrEmpty(palPath) && File.Exists(palPath))
+                LpaletteSource.Text = "Palette: " + Path.GetFileName(palPath);
             else
                 LpaletteSource.Text = "Palette: internal";
+        }
+
+        private string GetCurrentExternalPalette()
+        {
+            if (string.IsNullOrEmpty(currentFilePath)) return "";
+            externalPaletteMap.TryGetValue(currentFilePath, out string palPath);
+            return palPath ?? "";
+        }
+
+        private void SetExternalPaletteForCurrentFile(string palettePath)
+        {
+            if (string.IsNullOrEmpty(currentFilePath)) return;
+            externalPaletteMap[currentFilePath] = palettePath;
+            SaveExternalPaletteMap();
+        }
+
+        private void RemoveExternalPaletteForCurrentFile()
+        {
+            if (string.IsNullOrEmpty(currentFilePath)) return;
+            externalPaletteMap.Remove(currentFilePath);
+            SaveExternalPaletteMap();
+        }
+
+        private void LoadExternalPaletteMap()
+        {
+            externalPaletteMap.Clear();
+            string stored = Properties.Settings.Default.externalPalettePath;
+            if (string.IsNullOrEmpty(stored)) return;
+
+            string[] parts = stored.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i + 1 < parts.Length; i += 2)
+                externalPaletteMap[parts[i]] = parts[i + 1];
+        }
+
+        private void SaveExternalPaletteMap()
+        {
+            var pairs = new List<string>();
+            foreach (var kvp in externalPaletteMap)
+            {
+                pairs.Add(kvp.Key);
+                pairs.Add(kvp.Value);
+            }
+            Properties.Settings.Default.externalPalettePath = string.Join("|", pairs);
+            Properties.Settings.Default.Save();
         }
 
         private void AnimationList_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
