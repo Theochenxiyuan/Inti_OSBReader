@@ -4,20 +4,31 @@ This is a personal fork of the [original Inti_OSBReader](https://github.com/ska2
 
 The fork focuses on improving the user experience for day-to-day use while keeping the original core logic intact. Some code and design changes were assisted by AI (opencode).
 
-## Key Differences from the Original
+## What's New
 
-- **Folder sidebar** — Open an entire folder and navigate files via a sidebar tree view
-- **Splitter layout** — Directory tree, animation list, and preview panel are resizable via drag handles (no fixed coordinates)
-- **Auto-load first animation** — Open a file and it immediately starts playing the first animation
-- **Palette refresh** — Switching palettes updates the preview instantly
-- **Flip refresh** — Flip applies immediately to the current frame
-- **Status bar** — Displays file name, animation count, frame count, and palette count
-- **Controls disabled until file loaded** — Prevents accidental clicks on save/view actions when no file is open
-- **Window title** — Shows current file name (`filename.osb - Inti OSB Reader`)
-- **Recent Files & Recent Folders** — Quick access to previously opened files and folders
-- **Fixed typos** — Corrected misspellings in menus and exported file names
-- **Bug fixes** — Missing `Path.Combine` in "Save All Palettes" (produced wrong file paths), `SolidBrush` memory leaks in palette rendering
-- **Collapsible bottom palette bar** via `TableLayoutPanel`
+### Layout & Navigation
+- **Folder sidebar** — Open an entire folder and navigate files via a tree view (original only had single-file open)
+- **Resizable panels** — Directory tree, animation list, and preview area use `SplitContainer` with drag handles instead of fixed coordinates
+- **Status bar** — Shows current file name, animation count, frame count, and palette count
+- **Window title** — Displays current file name (`filename.osb - Inti OSB Reader`)
+
+### Convenience
+- **Auto-play first animation** — Opening a file automatically selects and plays the first animation
+- **Recent Files & Recent Folders** — Quick access to previously opened items in the File menu
+- **Refresh button** — Manually re-render the current frame
+- **Disabled controls when no file loaded** — Prevents accidental clicks on save/view actions
+
+### Bug Fixes (original code)
+- **"Save All Palettes" path** — Missing `Path.Combine` produced incorrect file paths
+- **`SolidBrush` leak** — Brushes created in a loop were never disposed in `displayPallete`
+
+### Typo Fixes
+- Menu: `Documneted data` → `Documented data`
+- Menu: `fremes related data` → `Frames related data`
+- Label: `Pallete:` → `Palette:`
+- Shortcut hint: `Ctrtl+S` → `Ctrl+S`
+- Export filename: `_ColoerPalettes.txt` → `_ColorPalettes.txt`
+- Shortcut hint: `Ctrl+Shit+Alt+S` → `Ctrl+Shift+Alt+S`
 
 ## Usage
 
