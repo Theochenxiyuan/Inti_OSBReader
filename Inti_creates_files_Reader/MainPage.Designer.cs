@@ -73,7 +73,6 @@
             picPalatte = new PictureBox();
             infoPanel = new Panel();
             Lfile = new Label();
-            Lfilename = new Label();
             LcurrFrame = new Label();
             TcurrFrame = new TextBox();
             statusStrip1 = new StatusStrip();
@@ -398,6 +397,7 @@
             CLoop.TabIndex = 0;
             CLoop.Text = "Loop";
             CLoop.UseVisualStyleBackColor = true;
+            CLoop.CheckedChanged += CLoop_CheckedChanged;
             //
             // Lspeed
             //
@@ -414,6 +414,7 @@
             Tspeed.Name = "Tspeed";
             Tspeed.Size = new Size(60, 23);
             Tspeed.TabIndex = 2;
+            Tspeed.Leave += Tspeed_Leave;
             //
             // Flip
             //
@@ -514,7 +515,6 @@
             // infoPanel
             //
             infoPanel.Controls.Add(Lfile);
-            infoPanel.Controls.Add(Lfilename);
             infoPanel.Controls.Add(LcurrFrame);
             infoPanel.Controls.Add(TcurrFrame);
             infoPanel.Dock = DockStyle.Top;
@@ -531,14 +531,6 @@
             Lfile.Size = new Size(31, 15);
             Lfile.TabIndex = 0;
             Lfile.Text = "File: ";
-            //
-            // Lfilename
-            //
-            Lfilename.AutoSize = true;
-            Lfilename.Location = new Point(40, 3);
-            Lfilename.Name = "Lfilename";
-            Lfilename.Size = new Size(0, 15);
-            Lfilename.TabIndex = 1;
             //
             // LcurrFrame
             //
@@ -660,15 +652,8 @@
         private PictureBox picPalatte;
         private Panel infoPanel;
         private Label Lfile;
-        private Label Lfilename;
         private Label LcurrFrame;
         private TextBox TcurrFrame;
-        private Label Lcenter;
-        private TextBox Tcenter;
-        private Label Lframe;
-        private TextBox Tframe;
-        private Label Lwait;
-        private TextBox Twait;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel statusLabel;
     }

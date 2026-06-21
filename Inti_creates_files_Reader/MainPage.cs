@@ -42,6 +42,23 @@ namespace Inti_creates_files_Reader
 
         }
 
+        private void Tspeed_Leave(object sender, EventArgs e)
+        {
+            if (!int.TryParse(Tspeed.Text, out int speed) || speed < 1)
+            {
+                Tspeed.Text = Properties.Settings.Default.timeSpeed.ToString();
+                return;
+            }
+            Properties.Settings.Default.timeSpeed = speed;
+            Properties.Settings.Default.Save();
+        }
+
+        private void CLoop_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.Loop = CLoop.Checked;
+            Properties.Settings.Default.Save();
+        }
+
         private void MainPage_Load(object sender, EventArgs e)
         {
             pic.Image = null;
@@ -57,7 +74,7 @@ namespace Inti_creates_files_Reader
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.InitialDirectory = Properties.Settings.Default.pathOpen;
-            dialog.Filter = "Readable files|*.osb;*.scb|;All files (*.*)|*.*";
+            dialog.Filter = "Readable files (*.osb;*.scb)|*.osb;*.scb|All files (*.*)|*.*";
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
@@ -450,14 +467,6 @@ namespace Inti_creates_files_Reader
             if (animationIndex < 0 || animationIndex >= obj.animations.Count || obj.animations[animationIndex].Size() == 0)
                 return;
 
-            if (!string.IsNullOrEmpty(Tspeed.Text) && Tspeed.Text.All(char.IsDigit))
-            {
-                Properties.Settings.Default.timeSpeed = int.Parse(Tspeed.Text);
-                Properties.Settings.Default.Loop = CLoop.Checked;
-                Properties.Settings.Default.Save();
-
-
-            }
             double elapsed = (DateTime.Now - startTime).TotalSeconds * Properties.Settings.Default.timeSpeed;
 
             if (CLoop.Checked)
@@ -535,12 +544,6 @@ namespace Inti_creates_files_Reader
             return new Rectangle(posX, posY, drawWidth, drawHeight);
         }
 
-
-        private void BapplyPalette_Click(object sender, EventArgs e)
-        {
-            if (picPalatte.Image == null)
-                return;
-        }
 
         private void BrightPalette_Click(object sender, EventArgs e)
         {
