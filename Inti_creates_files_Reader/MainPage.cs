@@ -319,6 +319,7 @@ namespace Inti_creates_files_Reader
             Flip.Enabled = enabled;
             BplayPause.Enabled = enabled;
             BsaveGif.Enabled = enabled;
+            BspriteSheet.Enabled = enabled;
             Tspeed.Enabled = enabled;
         }
 
@@ -916,6 +917,11 @@ namespace Inti_creates_files_Reader
         {
             obj.frames.FlipO();
             RenderCurrentFrame();
+        }
+
+        private void BspriteSheet_Click(object sender, EventArgs e)
+        {
+            spriteSheetToolStripMenuItem_Click(sender, e);
         }
     }
 }

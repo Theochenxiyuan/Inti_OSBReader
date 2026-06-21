@@ -66,6 +66,7 @@
             Flip = new Button();
             BplayPause = new Button();
             BsaveGif = new Button();
+            BspriteSheet = new Button();
             bottomTable = new TableLayoutPanel();
             paletteControlsPanel = new Panel();
             Lpallete = new Label();
@@ -383,6 +384,7 @@
             controlsPanel.Controls.Add(Flip);
             controlsPanel.Controls.Add(BplayPause);
             controlsPanel.Controls.Add(BsaveGif);
+            controlsPanel.Controls.Add(BspriteSheet);
             controlsPanel.Location = new Point(695, 0);
             controlsPanel.Name = "controlsPanel";
             controlsPanel.Padding = new Padding(3, 6, 3, 3);
@@ -446,11 +448,22 @@
             BsaveGif.Text = "GIF";
             BsaveGif.UseVisualStyleBackColor = true;
             BsaveGif.Click += saveAnimationToolStripMenuItem_Click;
+            //
+            // BspriteSheet
+            //
+            BspriteSheet.Location = new Point(3, 162);
+            BspriteSheet.Name = "BspriteSheet";
+            BspriteSheet.Size = new Size(60, 23);
+            BspriteSheet.TabIndex = 6;
+            BspriteSheet.Text = "Sprite";
+            BspriteSheet.UseVisualStyleBackColor = true;
+            BspriteSheet.Click += BspriteSheet_Click;
             toolTip1.SetToolTip(BleftPalette, "Previous palette");
             toolTip1.SetToolTip(BrightPalette, "Next palette");
             toolTip1.SetToolTip(Flip, "Flip horizontally");
             toolTip1.SetToolTip(BplayPause, "Pause/Play (Space)");
             toolTip1.SetToolTip(BsaveGif, "Export current animation as GIF");
+            toolTip1.SetToolTip(BspriteSheet, "Open Sprite Sheet (Ctrl+Q)");
             //
             // bottomTable
             //
@@ -650,6 +663,7 @@
         private Button Flip;
         private Button BplayPause;
         private Button BsaveGif;
+        private Button BspriteSheet;
         private TableLayoutPanel bottomTable;
         private Panel paletteControlsPanel;
         private Label Lpallete;

@@ -26,6 +26,7 @@ namespace Inti_creates_files_Reader
             InitializeComponent();
             this.obj = obj;
             Lfile.Text = "File: " + obj.getName();
+            Text = obj.getName() + " - Sprite Sheet";
 
             displayedBitmaps = new Bitmap[3];
             pltIndex = -1;
@@ -403,21 +404,6 @@ namespace Inti_creates_files_Reader
                 displaySpriteSheet();
                 Properties.Settings.Default.colorCenter = color.Color.ToArgb();
                 Properties.Settings.Default.Save();
-            }
-        }
-
-        private void pic_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.InitialDirectory = Properties.Settings.Default.PathSave;
-            saveFileDialog.FileName = obj.name + "_spriteSheet.png";
-
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                Properties.Settings.Default.PathSave = Path.GetDirectoryName(saveFileDialog.FileName);
-                Properties.Settings.Default.Save();
-
-                pic.Image.Save(saveFileDialog.FileName);
             }
         }
 

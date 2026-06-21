@@ -51,6 +51,7 @@ namespace Inti_creates_files_Reader
             centerColor = new PictureBox();
             button3 = new Button();
             button4 = new Button();
+            BsavePng = new Button();
             ((System.ComponentModel.ISupportInitialize)pic).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picPalatte).BeginInit();
             menuStrip1.SuspendLayout();
@@ -66,7 +67,6 @@ namespace Inti_creates_files_Reader
             pic.Size = new Size(969, 560);
             pic.TabIndex = 0;
             pic.TabStop = false;
-            pic.Click += pic_Click;
             // 
             // BrightPalette
             // 
@@ -259,7 +259,7 @@ namespace Inti_creates_files_Reader
             // button4
             // 
             button4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            button4.Location = new Point(1024, 179);
+            button4.Location = new Point(999, 179);
             button4.Name = "button4";
             button4.Size = new Size(84, 23);
             button4.TabIndex = 110;
@@ -267,12 +267,24 @@ namespace Inti_creates_files_Reader
             button4.UseVisualStyleBackColor = true;
             button4.Click += Flip_Click;
             // 
+            // BsavePng
+            // 
+            BsavePng.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            BsavePng.Location = new Point(999, 218);
+            BsavePng.Name = "BsavePng";
+            BsavePng.Size = new Size(84, 23);
+            BsavePng.TabIndex = 111;
+            BsavePng.Text = "Save PNG";
+            BsavePng.UseVisualStyleBackColor = true;
+            BsavePng.Click += Save_Click;
+            // 
             // spriteSheetPage
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1146, 690);
             Controls.Add(button4);
+            Controls.Add(BsavePng);
             Controls.Add(centerColor);
             Controls.Add(backgroundColor);
             Controls.Add(button2);
@@ -324,5 +336,6 @@ namespace Inti_creates_files_Reader
         private PictureBox centerColor;
         private Button button3;
         private Button button4;
+        private Button BsavePng;
     }
 }
