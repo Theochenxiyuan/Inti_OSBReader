@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: windows-latest
@@ -19,16 +22,18 @@ jobs:
       - name: Publish
         run: dotnet publish "Inti_creates_files_Reader/Inti_creates_files_Reader.csproj" -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Upload
+      - name: Zip publish folder
+        run: Compress-Archive -Path "Inti_creates_files_Reader\bin\Release\net8.0-windows\win-x64\publish\*" -DestinationPath "Inti_OSBReader_win-x64.zip"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Inti_OSBReader_win-x64
-          path: Inti_creates_files_Reader/bin/Release/net8.0-windows/win-x64/publish/
+          path: Inti_OSBReader_win-x64.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            Inti_creates_files_Reader/bin/Release/net8.0-windows/win-x64/publish/Inti_creates_files_Reader.exe
+          files: Inti_OSBReader_win-x64.zip
           body: |
-            See [CHANGES](./commits/master) for full commit history.
+            Self-contained Windows x64 build. Download the zip, extract, and run `Inti_creates_files_Reader.exe`.
