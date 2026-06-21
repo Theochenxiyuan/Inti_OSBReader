@@ -32,7 +32,7 @@ namespace Inti_creates_files_Reader
         private bool isPaused = false;
         private readonly System.Windows.Forms.Timer filterTimer = new System.Windows.Forms.Timer();
         private string currentSearch = "";
-        private Dictionary<string, string> externalPaletteMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, List<string>> externalPaletteMap = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
 
         public MainPage()
@@ -162,9 +162,9 @@ namespace Inti_creates_files_Reader
                 Lpalletecount.Text = "—";
             }
 
-            string palPath = GetCurrentExternalPalette();
-            if (!string.IsNullOrEmpty(palPath) && File.Exists(palPath))
-                ApplyExternalPalette(palPath);
+            var palettePaths = GetCurrentExternalPalettes();
+            if (palettePaths.Count > 0)
+                ApplyExternalPalettes(palettePaths);
 
             UpdatePaletteSourceLabel();
             Text = obj.getName() + " - Inti OSB Reader";
@@ -516,8 +516,8 @@ namespace Inti_creates_files_Reader
             {
                 Properties.Settings.Default.pathOpen = Path.GetDirectoryName(dialog.FileName);
                 Properties.Settings.Default.Save();
-                SetExternalPaletteForCurrentFile(dialog.FileName);
-                ApplyExternalPalette(dialog.FileName);
+                AddExternalPaletteForCurrentFile(dialog.FileName);
+                ApplyExternalPalettes(GetCurrentExternalPalettes());
                 UpdatePaletteSourceLabel();
                 RenderCurrentFrame();
             }
@@ -530,19 +530,22 @@ namespace Inti_creates_files_Reader
 
         private void BclearPalette_Click(object sender, EventArgs e)
         {
-            RemoveExternalPaletteForCurrentFile();
+            RemoveLastExternalPaletteForCurrentFile();
             if (!string.IsNullOrEmpty(currentFilePath))
                 LoadFile(currentFilePath);
         }
 
-        private void ApplyExternalPalette(string palettePath)
+        private void ApplyExternalPalettes(List<string> palettePaths)
         {
-            if (!File.Exists(palettePath)) return;
+            foreach (string palettePath in palettePaths)
+            {
+                if (!File.Exists(palettePath)) continue;
 
-            OSB obj2 = new OSB(palettePath);
-            obj2.plts = obj.plts;
-            obj2.readData();
-            obj.plts = obj2.plts;
+                OSB obj2 = new OSB(palettePath);
+                obj2.plts = obj.plts;
+                obj2.readData();
+                obj.plts = obj2.plts;
+            }
 
             if (obj.plts.Size() != 0)
             {
@@ -554,28 +557,54 @@ namespace Inti_creates_files_Reader
 
         private void UpdatePaletteSourceLabel()
         {
-            string palPath = GetCurrentExternalPalette();
-            if (!string.IsNullOrEmpty(palPath) && File.Exists(palPath))
-                LpaletteSource.Text = "Palette: " + Path.GetFileName(palPath);
-            else
+            var palPaths = GetCurrentExternalPalettes();
+            int count = palPaths.Count(p => File.Exists(p));
+            if (count == 0)
+            {
                 LpaletteSource.Text = "Palette: internal";
+                return;
+            }
+
+            string firstName = Path.GetFileName(palPaths[0]);
+            if (count == 1)
+                LpaletteSource.Text = "Palette: " + firstName;
+            else
+                LpaletteSource.Text = $"Palettes ({count}): {firstName} +{count - 1} more";
         }
 
-        private string GetCurrentExternalPalette()
+        private List<string> GetCurrentExternalPalettes()
         {
-            if (string.IsNullOrEmpty(currentFilePath)) return "";
-            externalPaletteMap.TryGetValue(currentFilePath, out string palPath);
-            return palPath ?? "";
+            if (string.IsNullOrEmpty(currentFilePath)) return new List<string>();
+            externalPaletteMap.TryGetValue(currentFilePath, out List<string>? palPaths);
+            return palPaths != null ? new List<string>(palPaths) : new List<string>();
         }
 
-        private void SetExternalPaletteForCurrentFile(string palettePath)
+        private void AddExternalPaletteForCurrentFile(string palettePath)
         {
             if (string.IsNullOrEmpty(currentFilePath)) return;
-            externalPaletteMap[currentFilePath] = palettePath;
+            if (!externalPaletteMap.TryGetValue(currentFilePath, out List<string>? list))
+            {
+                list = new List<string>();
+                externalPaletteMap[currentFilePath] = list;
+            }
+            list.Add(palettePath);
             SaveExternalPaletteMap();
         }
 
-        private void RemoveExternalPaletteForCurrentFile()
+        private void RemoveLastExternalPaletteForCurrentFile()
+        {
+            if (string.IsNullOrEmpty(currentFilePath)) return;
+            if (externalPaletteMap.TryGetValue(currentFilePath, out List<string>? list))
+            {
+                if (list.Count > 0)
+                    list.RemoveAt(list.Count - 1);
+                if (list.Count == 0)
+                    externalPaletteMap.Remove(currentFilePath);
+                SaveExternalPaletteMap();
+            }
+        }
+
+        private void ClearExternalPalettesForCurrentFile()
         {
             if (string.IsNullOrEmpty(currentFilePath)) return;
             externalPaletteMap.Remove(currentFilePath);
@@ -590,7 +619,11 @@ namespace Inti_creates_files_Reader
 
             string[] parts = stored.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i + 1 < parts.Length; i += 2)
-                externalPaletteMap[parts[i]] = parts[i + 1];
+            {
+                string osbPath = parts[i];
+                string[] palettes = parts[i + 1].Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                externalPaletteMap[osbPath] = new List<string>(palettes);
+            }
         }
 
         private void SaveExternalPaletteMap()
@@ -599,7 +632,7 @@ namespace Inti_creates_files_Reader
             foreach (var kvp in externalPaletteMap)
             {
                 pairs.Add(kvp.Key);
-                pairs.Add(kvp.Value);
+                pairs.Add(string.Join(";", kvp.Value));
             }
             Properties.Settings.Default.externalPalettePath = string.Join("|", pairs);
             Properties.Settings.Default.Save();

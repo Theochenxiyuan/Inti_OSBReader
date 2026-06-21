@@ -487,6 +487,8 @@
             toolTip1.SetToolTip(BplayPause, "Pause/Play (Space)");
             toolTip1.SetToolTip(BsaveGif, "Export current animation as GIF");
             toolTip1.SetToolTip(BspriteSheet, "Open Sprite Sheet (Ctrl+Q)");
+            toolTip1.SetToolTip(BaddPalette, "Add external palette (stacks)");
+            toolTip1.SetToolTip(BclearPalette, "Remove last external palette");
             //
             // bottomTable
             //

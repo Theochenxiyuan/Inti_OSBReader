@@ -29,10 +29,11 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 - **Disabled controls when no file loaded** — Prevents accidental clicks on save/view actions
 
 ### External Palette Management
-- **Per-file external palette** — Each OSB file remembers its own external palette file
-- **Add / Clear buttons** — Load or remove external palette directly from the toolbar
-- **Palette source label** — Shows which palette file is currently active (e.g. `Palette: pl_palette.osb`)
-- **Auto-reapply on file switch** — External palette is automatically reapplied when switching between files
+- **Stack multiple palettes** — Each click of "Add" loads another external palette file and appends its palettes, just like the original program
+- **Per-file external palette list** — Each OSB file remembers its own set of external palette files
+- **Palette source label** — Shows the count and first palette name when multiple palettes are stacked (e.g. `Palettes (3): pl001.osb +2 more`)
+- **Auto-reapply on file switch** — External palettes are automatically reapplied in order when switching between files
+- **Remove last palette** — The `×` button removes the most recently added external palette; `File → Add color palette` appends another
 - **Persists across restarts** — Palette bindings saved in settings
 
 ### Bug Fixes (original code)
