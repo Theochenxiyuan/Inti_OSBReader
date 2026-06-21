@@ -520,7 +520,6 @@
             //
             // picPalatte
             //
-            picPalatte.BackColor = SystemColors.ControlDarkDark;
             picPalatte.Dock = DockStyle.Fill;
             picPalatte.Location = new Point(240, 0);
             picPalatte.Margin = new Padding(0);
