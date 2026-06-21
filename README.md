@@ -14,8 +14,11 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 
 ### Convenience
 - **Auto-play first animation** — Opening a file automatically selects and plays the first animation
+- **Pause / Play** — Button and Spacebar to pause or resume the current animation
 - **Recent Files & Recent Folders** — Quick access to previously opened items in the File menu
-- **Refresh button** — Manually re-render the current frame
+- **Drag-and-drop** — Drop `.osb` / `.scb` files onto the window to open them
+- **Export GIF button** — Explicit "GIF" button instead of hidden click-on-preview behavior
+- **Tooltips** — On palette buttons, Flip, Pause/Play, and GIF export
 - **Disabled controls when no file loaded** — Prevents accidental clicks on save/view actions
 
 ### Bug Fixes (original code)

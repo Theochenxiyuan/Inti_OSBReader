@@ -29,6 +29,7 @@ namespace Inti_creates_files_Reader
         private readonly string[] readableExtensions = { ".osb", ".scb" };
         private const int MaxRecentFiles = 10;
         private string currentFilePath = "";
+        private bool isPaused = false;
 
 
         public MainPage()
@@ -68,6 +69,10 @@ namespace Inti_creates_files_Reader
             UpdateStatusBar();
             BuildRecentFilesMenu();
             BuildRecentFoldersMenu();
+            Lpalletecount.Text = "—";
+            AllowDrop = true;
+            DragEnter += MainPage_DragEnter;
+            DragDrop += MainPage_DragDrop;
         }
 
         private void Bopen_Click(object sender, EventArgs e)
@@ -142,8 +147,19 @@ namespace Inti_creates_files_Reader
                 displayPallete(obj.plts.getPalette(pltIndex));
                 Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
             }
-            Lfile.Text = "File: " + obj.getName();
+            if (obj.plts.Size() != 0)
+            {
+                pltIndex = -1;
+                displayPallete(obj.plts.getPalette(pltIndex));
+                Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
+            }
+            else
+            {
+                Lpalletecount.Text = "—";
+            }
             Text = obj.getName() + " - Inti OSB Reader";
+            isPaused = false;
+            UpdatePlayPauseButton();
             SetControlsEnabled(true);
             UpdateStatusBar();
             AddRecentFile(fileName);
@@ -301,7 +317,8 @@ namespace Inti_creates_files_Reader
             BleftPalette.Enabled = enabled;
             BrightPalette.Enabled = enabled;
             Flip.Enabled = enabled;
-            RefreshAnimation.Enabled = enabled;
+            BplayPause.Enabled = enabled;
+            BsaveGif.Enabled = enabled;
             Tspeed.Enabled = enabled;
         }
 
@@ -460,6 +477,8 @@ namespace Inti_creates_files_Reader
             animationTimer.Tick += AnimationTimer_Tick;
 
             animationTimer.Start();
+            isPaused = false;
+            UpdatePlayPauseButton();
         }
 
         private void AnimationTimer_Tick(object sender, EventArgs e)
@@ -573,9 +592,65 @@ namespace Inti_creates_files_Reader
             }
         }
 
-        private void RefreshAnimation_Click(object sender, EventArgs e)
+        private void BplayPause_Click(object sender, EventArgs e)
         {
-            RenderCurrentFrame();
+            TogglePlayPause();
+        }
+
+        private void TogglePlayPause()
+        {
+            if (obj == null || obj.animations == null || obj.animations.Count == 0)
+                return;
+
+            if (isPaused)
+            {
+                animationTimer.Start();
+                isPaused = false;
+            }
+            else
+            {
+                animationTimer.Stop();
+                isPaused = true;
+            }
+            UpdatePlayPauseButton();
+        }
+
+        private void UpdatePlayPauseButton()
+        {
+            if (BplayPause == null) return;
+            BplayPause.Text = isPaused ? "Play" : "Pause";
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Space && obj != null && obj.animations != null && obj.animations.Count > 0)
+            {
+                TogglePlayPause();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void MainPage_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (files != null && files.Any(IsReadableFile))
+                    e.Effect = DragDropEffects.Copy;
+            }
+        }
+
+        private void MainPage_DragDrop(object sender, DragEventArgs e)
+        {
+            string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            string? file = files?.FirstOrDefault(IsReadableFile);
+            if (file != null && File.Exists(file))
+            {
+                Properties.Settings.Default.pathOpen = Path.GetDirectoryName(file);
+                Properties.Settings.Default.Save();
+                LoadFile(file);
+            }
         }
 
         private void displayPallete(Bitmap oplt)
@@ -835,12 +910,6 @@ namespace Inti_creates_files_Reader
                 });
                 collection.Write(path, MagickFormat.Gif);
             }
-        }
-
-        private void pic_Click(object sender, EventArgs e)
-        {
-            if (obj.animations[animationIndex] != null)
-                createGif();
         }
 
         private void Flip_Click(object sender, EventArgs e)

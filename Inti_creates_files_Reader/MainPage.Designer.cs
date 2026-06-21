@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             menuStrip1 = new MenuStrip();
+            toolTip1 = new ToolTip(components);
             fileToolStripMenuItem = new ToolStripMenuItem();
             openToolStripMenuItem = new ToolStripMenuItem();
             openFolderToolStripMenuItem = new ToolStripMenuItem();
@@ -63,7 +64,8 @@
             Lspeed = new Label();
             Tspeed = new TextBox();
             Flip = new Button();
-            RefreshAnimation = new Button();
+            BplayPause = new Button();
+            BsaveGif = new Button();
             bottomTable = new TableLayoutPanel();
             paletteControlsPanel = new Panel();
             Lpallete = new Label();
@@ -72,7 +74,6 @@
             Lpalletecount = new Label();
             picPalatte = new PictureBox();
             infoPanel = new Panel();
-            Lfile = new Label();
             LcurrFrame = new Label();
             TcurrFrame = new TextBox();
             statusStrip1 = new StatusStrip();
@@ -372,7 +373,6 @@
             pic.Size = new Size(683, 492);
             pic.TabIndex = 0;
             pic.TabStop = false;
-            pic.Click += pic_Click;
             //
             // controlsPanel
             //
@@ -381,7 +381,8 @@
             controlsPanel.Controls.Add(Lspeed);
             controlsPanel.Controls.Add(Tspeed);
             controlsPanel.Controls.Add(Flip);
-            controlsPanel.Controls.Add(RefreshAnimation);
+            controlsPanel.Controls.Add(BplayPause);
+            controlsPanel.Controls.Add(BsaveGif);
             controlsPanel.Location = new Point(695, 0);
             controlsPanel.Name = "controlsPanel";
             controlsPanel.Padding = new Padding(3, 6, 3, 3);
@@ -426,15 +427,30 @@
             Flip.UseVisualStyleBackColor = true;
             Flip.Click += Flip_Click;
             //
-            // RefreshAnimation
+            // BplayPause
             //
-            RefreshAnimation.Location = new Point(3, 104);
-            RefreshAnimation.Name = "RefreshAnimation";
-            RefreshAnimation.Size = new Size(60, 23);
-            RefreshAnimation.TabIndex = 4;
-            RefreshAnimation.Text = "Refresh";
-            RefreshAnimation.UseVisualStyleBackColor = true;
-            RefreshAnimation.Click += RefreshAnimation_Click;
+            BplayPause.Location = new Point(3, 104);
+            BplayPause.Name = "BplayPause";
+            BplayPause.Size = new Size(60, 23);
+            BplayPause.TabIndex = 4;
+            BplayPause.Text = "Pause";
+            BplayPause.UseVisualStyleBackColor = true;
+            BplayPause.Click += BplayPause_Click;
+            //
+            // BsaveGif
+            //
+            BsaveGif.Location = new Point(3, 133);
+            BsaveGif.Name = "BsaveGif";
+            BsaveGif.Size = new Size(60, 23);
+            BsaveGif.TabIndex = 5;
+            BsaveGif.Text = "GIF";
+            BsaveGif.UseVisualStyleBackColor = true;
+            BsaveGif.Click += saveAnimationToolStripMenuItem_Click;
+            toolTip1.SetToolTip(BleftPalette, "Previous palette");
+            toolTip1.SetToolTip(BrightPalette, "Next palette");
+            toolTip1.SetToolTip(Flip, "Flip horizontally");
+            toolTip1.SetToolTip(BplayPause, "Pause/Play (Space)");
+            toolTip1.SetToolTip(BsaveGif, "Export current animation as GIF");
             //
             // bottomTable
             //
@@ -500,10 +516,11 @@
             Lpalletecount.Name = "Lpalletecount";
             Lpalletecount.Size = new Size(57, 15);
             Lpalletecount.TabIndex = 3;
-            Lpalletecount.Text = "0 out of 0";
+            Lpalletecount.Text = "—";
             //
             // picPalatte
             //
+            picPalatte.BackColor = SystemColors.ControlDarkDark;
             picPalatte.Dock = DockStyle.Fill;
             picPalatte.Location = new Point(240, 0);
             picPalatte.Margin = new Padding(0);
@@ -514,7 +531,6 @@
             //
             // infoPanel
             //
-            infoPanel.Controls.Add(Lfile);
             infoPanel.Controls.Add(LcurrFrame);
             infoPanel.Controls.Add(TcurrFrame);
             infoPanel.Dock = DockStyle.Top;
@@ -522,15 +538,6 @@
             infoPanel.Name = "infoPanel";
             infoPanel.Size = new Size(683, 42);
             infoPanel.TabIndex = 3;
-            //
-            // Lfile
-            //
-            Lfile.AutoSize = true;
-            Lfile.Location = new Point(3, 3);
-            Lfile.Name = "Lfile";
-            Lfile.Size = new Size(31, 15);
-            Lfile.TabIndex = 0;
-            Lfile.Text = "File: ";
             //
             // LcurrFrame
             //
@@ -642,7 +649,8 @@
         private Label Lspeed;
         private TextBox Tspeed;
         private Button Flip;
-        private Button RefreshAnimation;
+        private Button BplayPause;
+        private Button BsaveGif;
         private TableLayoutPanel bottomTable;
         private Panel paletteControlsPanel;
         private Label Lpallete;
@@ -651,9 +659,9 @@
         private Label Lpalletecount;
         private PictureBox picPalatte;
         private Panel infoPanel;
-        private Label Lfile;
         private Label LcurrFrame;
         private TextBox TcurrFrame;
+        private ToolTip toolTip1;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel statusLabel;
     }
