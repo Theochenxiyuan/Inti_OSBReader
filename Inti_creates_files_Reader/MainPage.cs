@@ -516,6 +516,7 @@ namespace Inti_creates_files_Reader
                 SetExternalPaletteForCurrentFile(dialog.FileName);
                 ApplyExternalPalette(dialog.FileName);
                 UpdatePaletteSourceLabel();
+                RenderCurrentFrame();
             }
         }
 
@@ -527,7 +528,8 @@ namespace Inti_creates_files_Reader
         private void BclearPalette_Click(object sender, EventArgs e)
         {
             RemoveExternalPaletteForCurrentFile();
-            UpdatePaletteSourceLabel();
+            if (!string.IsNullOrEmpty(currentFilePath))
+                LoadFile(currentFilePath);
         }
 
         private void ApplyExternalPalette(string palettePath)
