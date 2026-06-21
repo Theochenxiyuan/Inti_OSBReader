@@ -79,6 +79,9 @@
             infoPanel = new Panel();
             LcurrFrame = new Label();
             TcurrFrame = new TextBox();
+            LpaletteSource = new Label();
+            BaddPalette = new Button();
+            BclearPalette = new Button();
             statusStrip1 = new StatusStrip();
             statusLabel = new ToolStripStatusLabel();
             menuStrip1.SuspendLayout();
@@ -565,6 +568,9 @@
             //
             infoPanel.Controls.Add(LcurrFrame);
             infoPanel.Controls.Add(TcurrFrame);
+            infoPanel.Controls.Add(LpaletteSource);
+            infoPanel.Controls.Add(BaddPalette);
+            infoPanel.Controls.Add(BclearPalette);
             infoPanel.Dock = DockStyle.Top;
             infoPanel.Location = new Point(6, 6);
             infoPanel.Name = "infoPanel";
@@ -589,6 +595,34 @@
             TcurrFrame.Name = "TcurrFrame";
             TcurrFrame.Size = new Size(100, 23);
             TcurrFrame.TabIndex = 3;
+            //
+            // LpaletteSource
+            //
+            LpaletteSource.AutoSize = true;
+            LpaletteSource.Location = new Point(100, 14);
+            LpaletteSource.Name = "LpaletteSource";
+            LpaletteSource.Size = new Size(80, 15);
+            LpaletteSource.Text = "Palette: internal";
+            //
+            // BaddPalette
+            //
+            BaddPalette.Location = new Point(3, 11);
+            BaddPalette.Name = "BaddPalette";
+            BaddPalette.Size = new Size(60, 23);
+            BaddPalette.TabIndex = 4;
+            BaddPalette.Text = "Add...";
+            BaddPalette.UseVisualStyleBackColor = true;
+            BaddPalette.Click += BaddPalette_Click;
+            //
+            // BclearPalette
+            //
+            BclearPalette.Location = new Point(69, 11);
+            BclearPalette.Name = "BclearPalette";
+            BclearPalette.Size = new Size(25, 23);
+            BclearPalette.TabIndex = 5;
+            BclearPalette.Text = "×";
+            BclearPalette.UseVisualStyleBackColor = true;
+            BclearPalette.Click += BclearPalette_Click;
             //
             // statusStrip1
             //
@@ -696,6 +730,9 @@
         private Panel infoPanel;
         private Label LcurrFrame;
         private TextBox TcurrFrame;
+        private Label LpaletteSource;
+        private Button BaddPalette;
+        private Button BclearPalette;
         private ToolTip toolTip1;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel statusLabel;

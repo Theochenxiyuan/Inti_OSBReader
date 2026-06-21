@@ -142,5 +142,17 @@ namespace Inti_creates_files_Reader.Properties {
                 this["fileFilter"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string externalPalettePath {
+            get {
+                return ((string)(this["externalPalettePath"]));
+            }
+            set {
+                this["externalPalettePath"] = value;
+            }
+        }
     }
 }

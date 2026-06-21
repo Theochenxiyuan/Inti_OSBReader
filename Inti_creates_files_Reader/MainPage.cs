@@ -32,6 +32,7 @@ namespace Inti_creates_files_Reader
         private bool isPaused = false;
         private readonly System.Windows.Forms.Timer filterTimer = new System.Windows.Forms.Timer();
         private string currentSearch = "";
+        private string externalPalettePath = "";
 
 
         public MainPage()
@@ -73,6 +74,7 @@ namespace Inti_creates_files_Reader
             BuildRecentFoldersMenu();
             Lpalletecount.Text = "—";
             filterTextBox.Text = Properties.Settings.Default.fileFilter;
+            externalPalettePath = Properties.Settings.Default.externalPalettePath;
             filterTimer.Interval = 500;
             filterTimer.Tick += filterTimer_Tick;
             AllowDrop = true;
@@ -152,16 +154,15 @@ namespace Inti_creates_files_Reader
                 displayPallete(obj.plts.getPalette(pltIndex));
                 Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
             }
-            if (obj.plts.Size() != 0)
-            {
-                pltIndex = -1;
-                displayPallete(obj.plts.getPalette(pltIndex));
-                Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
-            }
             else
             {
                 Lpalletecount.Text = "—";
             }
+
+            if (!string.IsNullOrEmpty(externalPalettePath) && File.Exists(externalPalettePath))
+                ApplyExternalPalette(externalPalettePath);
+
+            UpdatePaletteSourceLabel();
             Text = obj.getName() + " - Inti OSB Reader";
             isPaused = false;
             UpdatePlayPauseButton();
@@ -511,19 +512,50 @@ namespace Inti_creates_files_Reader
             {
                 Properties.Settings.Default.pathOpen = Path.GetDirectoryName(dialog.FileName);
                 Properties.Settings.Default.Save();
-
-                OSB obj2 = new OSB(dialog.FileName);
-                obj2.plts = obj.plts;
-                obj2.readData();
-                obj.plts = obj2.plts;
-
-                if (obj.plts.Size() != 0)
-                {
-                    pltIndex = -1;
-                    displayPallete(obj.plts.getPalette(pltIndex));
-                    Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
-                }
+                externalPalettePath = dialog.FileName;
+                Properties.Settings.Default.externalPalettePath = externalPalettePath;
+                Properties.Settings.Default.Save();
+                ApplyExternalPalette(externalPalettePath);
+                UpdatePaletteSourceLabel();
             }
+        }
+
+        private void BaddPalette_Click(object sender, EventArgs e)
+        {
+            openColorPaletteToolStripMenuItem_Click(sender, e);
+        }
+
+        private void BclearPalette_Click(object sender, EventArgs e)
+        {
+            externalPalettePath = "";
+            Properties.Settings.Default.externalPalettePath = "";
+            Properties.Settings.Default.Save();
+            UpdatePaletteSourceLabel();
+        }
+
+        private void ApplyExternalPalette(string palettePath)
+        {
+            if (!File.Exists(palettePath)) return;
+
+            OSB obj2 = new OSB(palettePath);
+            obj2.plts = obj.plts;
+            obj2.readData();
+            obj.plts = obj2.plts;
+
+            if (obj.plts.Size() != 0)
+            {
+                pltIndex = -1;
+                displayPallete(obj.plts.getPalette(pltIndex));
+                Lpalletecount.Text = (pltIndex + 1) + " out of " + obj.plts.Size();
+            }
+        }
+
+        private void UpdatePaletteSourceLabel()
+        {
+            if (!string.IsNullOrEmpty(externalPalettePath) && File.Exists(externalPalettePath))
+                LpaletteSource.Text = "Palette: " + Path.GetFileName(externalPalettePath);
+            else
+                LpaletteSource.Text = "Palette: internal";
         }
 
         private void AnimationList_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
