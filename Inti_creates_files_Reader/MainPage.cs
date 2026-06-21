@@ -70,6 +70,7 @@ namespace Inti_creates_files_Reader
             BuildRecentFilesMenu();
             BuildRecentFoldersMenu();
             Lpalletecount.Text = "—";
+            filterTextBox.Text = Properties.Settings.Default.fileFilter;
             AllowDrop = true;
             DragEnter += MainPage_DragEnter;
             DragDrop += MainPage_DragDrop;
@@ -394,7 +395,29 @@ namespace Inti_creates_files_Reader
 
         private bool IsReadableFile(string filePath)
         {
-            return readableExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase);
+            if (!readableExtensions.Contains(Path.GetExtension(filePath), StringComparer.OrdinalIgnoreCase))
+                return false;
+
+            string fileName = Path.GetFileName(filePath);
+            string filter = Properties.Settings.Default.fileFilter;
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                string[] filters = filter.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string f in filters)
+                {
+                    if (fileName.Contains(f.Trim(), StringComparison.OrdinalIgnoreCase))
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        private void filterTextBox_Leave(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.fileFilter = filterTextBox.Text;
+            Properties.Settings.Default.Save();
+            if (!string.IsNullOrEmpty(currentFilePath) && Directory.Exists(Properties.Settings.Default.pathDir))
+                LoadFolder(Properties.Settings.Default.pathDir);
         }
 
         private void FolderTree_AfterSelect(object sender, TreeViewEventArgs e)

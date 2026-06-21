@@ -130,5 +130,17 @@ namespace Inti_creates_files_Reader.Properties {
                 this["Loop"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string fileFilter {
+            get {
+                return ((string)(this["fileFilter"]));
+            }
+            set {
+                this["fileFilter"] = value;
+            }
+        }
     }
 }

@@ -53,6 +53,7 @@
             spriteSheetToolStripMenuItem = new ToolStripMenuItem();
             mainSplitContainer = new SplitContainer();
             FolderTree = new TreeView();
+            filterTextBox = new TextBox();
             contentSplitContainer = new SplitContainer();
             AnimationList = new ListView();
             Animation = new ColumnHeader();
@@ -283,6 +284,7 @@
             // mainSplitContainer.Panel1
             //
             mainSplitContainer.Panel1.Controls.Add(FolderTree);
+            mainSplitContainer.Panel1.Controls.Add(filterTextBox);
             //
             // mainSplitContainer.Panel2
             //
@@ -301,6 +303,14 @@
             FolderTree.TabIndex = 0;
             FolderTree.AfterSelect += FolderTree_AfterSelect;
             FolderTree.KeyDown += FolderTree_KeyDown;
+            //
+            // filterTextBox
+            //
+            filterTextBox.Dock = DockStyle.Top;
+            filterTextBox.Name = "filterTextBox";
+            filterTextBox.PlaceholderText = "Filter (e.g. _pal,_ex_pal)";
+            filterTextBox.TabIndex = 1;
+            filterTextBox.Leave += filterTextBox_Leave;
             //
             // contentSplitContainer
             //
@@ -650,6 +660,7 @@
         private ToolStripMenuItem spriteSheetToolStripMenuItem;
         private SplitContainer mainSplitContainer;
         private TreeView FolderTree;
+        private TextBox filterTextBox;
         private SplitContainer contentSplitContainer;
         private ListView AnimationList;
         public ColumnHeader Animation;
