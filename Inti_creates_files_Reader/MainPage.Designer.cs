@@ -310,7 +310,7 @@
             filterTextBox.Name = "filterTextBox";
             filterTextBox.PlaceholderText = "Filter (e.g. _pal,_ex_pal)";
             filterTextBox.TabIndex = 1;
-            filterTextBox.Leave += filterTextBox_Leave;
+            filterTextBox.KeyDown += filterTextBox_KeyDown;
             //
             // contentSplitContainer
             //

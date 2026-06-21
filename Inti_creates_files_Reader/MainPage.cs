@@ -30,6 +30,7 @@ namespace Inti_creates_files_Reader
         private const int MaxRecentFiles = 10;
         private string currentFilePath = "";
         private bool isPaused = false;
+        private readonly System.Windows.Forms.Timer filterTimer = new System.Windows.Forms.Timer();
 
 
         public MainPage()
@@ -71,6 +72,8 @@ namespace Inti_creates_files_Reader
             BuildRecentFoldersMenu();
             Lpalletecount.Text = "—";
             filterTextBox.Text = Properties.Settings.Default.fileFilter;
+            filterTimer.Interval = 500;
+            filterTimer.Tick += filterTimer_Tick;
             AllowDrop = true;
             DragEnter += MainPage_DragEnter;
             DragDrop += MainPage_DragDrop;
@@ -412,11 +415,33 @@ namespace Inti_creates_files_Reader
             return true;
         }
 
-        private void filterTextBox_Leave(object sender, EventArgs e)
+        private void filterTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                filterTimer.Stop();
+                ApplyFilter();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+            else
+            {
+                filterTimer.Stop();
+                filterTimer.Start();
+            }
+        }
+
+        private void filterTimer_Tick(object sender, EventArgs e)
+        {
+            filterTimer.Stop();
+            ApplyFilter();
+        }
+
+        private void ApplyFilter()
         {
             Properties.Settings.Default.fileFilter = filterTextBox.Text;
             Properties.Settings.Default.Save();
-            if (!string.IsNullOrEmpty(currentFilePath) && Directory.Exists(Properties.Settings.Default.pathDir))
+            if (!string.IsNullOrEmpty(Properties.Settings.Default.pathDir) && Directory.Exists(Properties.Settings.Default.pathDir))
                 LoadFolder(Properties.Settings.Default.pathDir);
         }
 
