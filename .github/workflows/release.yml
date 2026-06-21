@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+
+      - name: Publish
+        run: dotnet publish "Inti_creates_files_Reader/Inti_creates_files_Reader.csproj" -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Inti_OSBReader_win-x64
+          path: Inti_creates_files_Reader/bin/Release/net8.0-windows/win-x64/publish/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Inti_creates_files_Reader/bin/Release/net8.0-windows/win-x64/publish/Inti_creates_files_Reader.exe
+          body: |
+            See [CHANGES](./commits/master) for full commit history.
