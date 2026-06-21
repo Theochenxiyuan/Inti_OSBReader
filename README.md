@@ -11,6 +11,11 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 - **Resizable panels** — Directory tree, animation list, and preview area use `SplitContainer` with drag handles instead of fixed coordinates
 - **Status bar** — Shows current file name, animation count, frame count, and palette count
 - **Window title** — Displays current file name (`filename.osb - Inti OSB Reader`)
+- **Auto-load last folder** — Remembers and reopens the last used folder on startup
+
+### File Browser
+- **File name filter** — Exclude files by name pattern (e.g. `_pal,_ex_pal`), comma-separated, persisted in settings
+- **Search box** — Show only matching files, auto-expands all subdirectories
 
 ### Convenience
 - **Auto-play first animation** — Opening a file automatically selects and plays the first animation
@@ -18,12 +23,23 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 - **Recent Files & Recent Folders** — Quick access to previously opened items in the File menu
 - **Drag-and-drop** — Drop `.osb` / `.scb` files onto the window to open them
 - **Export GIF button** — Explicit "GIF" button instead of hidden click-on-preview behavior
-- **Tooltips** — On palette buttons, Flip, Pause/Play, and GIF export
+- **Sprite Sheet button** — Open sprite sheet view from the toolbar
+- **Sprite Sheet window** — Title shows filename, Save PNG is an explicit button
+- **Tooltips** — On palette buttons, Flip, Pause/Play, GIF, and Sprite buttons
 - **Disabled controls when no file loaded** — Prevents accidental clicks on save/view actions
+
+### External Palette Management
+- **Per-file external palette** — Each OSB file remembers its own external palette file
+- **Add / Clear buttons** — Load or remove external palette directly from the toolbar
+- **Palette source label** — Shows which palette file is currently active (e.g. `Palette: pl_palette.osb`)
+- **Auto-reapply on file switch** — External palette is automatically reapplied when switching between files
+- **Persists across restarts** — Palette bindings saved in settings
 
 ### Bug Fixes (original code)
 - **"Save All Palettes" path** — Missing `Path.Combine` produced incorrect file paths
 - **`SolidBrush` leak** — Brushes created in a loop were never disposed in `displayPallete`
+- **Open file dialog filter** — Malformed filter string caused a broken filter entry
+- **Tspeed save** — No longer writes to settings every 10ms; saves on focus leave with min value 1
 
 ### Typo Fixes
 - Menu: `Documneted data` → `Documented data`
