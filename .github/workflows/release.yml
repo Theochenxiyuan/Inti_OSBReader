@@ -40,6 +40,14 @@ jobs:
           body: |
             Self-contained Windows x64 build. Download the zip, extract, and run `Inti_creates_files_Reader.exe`.
 
+            ## What's New in v1.1.1
+
+            ### External Palette Management
+            - **Fixed stacking behavior** - "Add" now appends external palettes instead of replacing; multiple palette files can be layered like the original program
+            - **Per-file palette list** - Each OSB file remembers multiple external palette files
+            - **Remove last palette** - The `×` button removes the most recently added palette
+            - **Palette counter label** - Shows count and first palette name (e.g. `Palettes (3): pl001.osb +2 more`)
+
             ## What's New since v1.0.0
 
             ### UI Improvements
