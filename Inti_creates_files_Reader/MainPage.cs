@@ -80,6 +80,9 @@ namespace Inti_creates_files_Reader
             AllowDrop = true;
             DragEnter += MainPage_DragEnter;
             DragDrop += MainPage_DragDrop;
+
+            if (Directory.Exists(Properties.Settings.Default.pathDir))
+                LoadFolder(Properties.Settings.Default.pathDir);
         }
 
         private void Bopen_Click(object sender, EventArgs e)
