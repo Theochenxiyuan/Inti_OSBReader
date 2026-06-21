@@ -39,3 +39,36 @@ jobs:
           files: Inti_OSBReader_win-x64.zip
           body: |
             Self-contained Windows x64 build. Download the zip, extract, and run `Inti_creates_files_Reader.exe`.
+
+            ## What's New since v1.0.0
+
+            ### UI Improvements
+            - **Play/Pause button + Spacebar** - Pause or resume animation playback
+            - **Export GIF button** - Explicit button replaces hidden click-on-preview behavior
+            - **Sprite Sheet button** - Open sprite sheet view from the toolbar (checks file-not-loaded state)
+            - **Sprite Sheet window** - Title now shows filename, Save PNG is an explicit button instead of clicking the preview
+            - **Tooltips** - On palette buttons, Flip, Pause/Play, GIF, and Sprite buttons
+            - **Drag-and-drop** - Drop .osb/.scb files onto the window to open them
+
+            ### File Browser
+            - **File name filter** - Exclude files by name pattern (e.g. _pal, _ex_pal), persisted in settings
+            - **Search box** - Show only matching files, auto-expand all subdirectories
+            - **Auto-load last folder** - Remembers and reopens the last used folder on startup
+
+            ### External Palette Management
+            - **Per-file external palette** - Each OSB file remembers its own external palette file
+            - **Add/Clear buttons** - Load or remove external palette directly from the toolbar
+            - **Palette source label** - Shows which palette file is currently active
+            - **Auto-reapply on file switch** - External palette is automatically reapplied when switching between files
+            - **Persists across restarts** - Palette bindings saved in settings
+
+            ### Bug Fixes
+            - **Fix crash on startup** - ToolTip threw ArgumentNullException when components was null
+            - **Fix open file dialog filter** - Malformed filter string caused a broken filter entry
+            - **Fix Tspeed save** - No longer writes to settings every 10ms; saves on focus leave with min value 1
+            - **Remove dead code** - Unused fields and empty methods cleaned up
+
+            ### Build/Publish
+            - **Switched to Magick.NET-Q16-x64** - Smaller build output, fewer files
+            - **Publish profile + publish.ps1** - Simplified release build process
+            - **Release zip** - GitHub Actions now packages as zip instead of raw exe
