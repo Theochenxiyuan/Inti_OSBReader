@@ -6,7 +6,9 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -20,6 +22,11 @@ namespace Inti_creates_files_Reader
         private Bitmap[] displayedBitmaps;
         private int pltIndex;
         private Bitmap uncolored;
+        private readonly List<FramePlacement> framePlacements = new List<FramePlacement>();
+
+        private int FrameSpacing => (int)Nspacing.Value;
+
+        private sealed record FramePlacement(int Index, int X, int Y, int Width, int Height, int CenterX, int CenterY);
 
         public spriteSheetPage(ref OSB obj)
         {
@@ -27,6 +34,10 @@ namespace Inti_creates_files_Reader
             this.obj = obj;
             Lfile.Text = "File: " + obj.getName();
             Text = obj.getName() + " - Sprite Sheet";
+            Nspacing.Enabled = obj.isOSB();
+            button1.Enabled = obj.isOSB();
+            button1.Text = obj.isOSB() ? "Show Original Atlas" : "Original Atlas";
+            LviewMode.Text = obj.isOSB() ? "View: Reconstructed Frames" : "View: Original Atlas";
 
             displayedBitmaps = new Bitmap[3];
             pltIndex = -1;
@@ -44,6 +55,37 @@ namespace Inti_creates_files_Reader
             is_visible[2] = true;
             createSpriteSheet();
         }
+
+        private void DisposeSpriteSheetImages()
+        {
+            Image? preview = pic.Image;
+            pic.Image = null;
+            preview?.Dispose();
+
+            var images = new HashSet<Bitmap>(ReferenceEqualityComparer.Instance);
+            foreach (Bitmap? bitmap in displayedBitmaps)
+            {
+                if (bitmap != null)
+                    images.Add(bitmap);
+            }
+            if (uncolored != null)
+                images.Add(uncolored);
+
+            foreach (Bitmap bitmap in images)
+                bitmap.Dispose();
+
+            displayedBitmaps = new Bitmap[3];
+            uncolored = null!;
+        }
+
+        private void ReplaceSpriteBitmap(Bitmap bitmap)
+        {
+            Bitmap? previous = displayedBitmaps[1];
+            displayedBitmaps[1] = bitmap;
+            if (previous != null && !ReferenceEquals(previous, uncolored) && !ReferenceEquals(previous, bitmap))
+                previous.Dispose();
+        }
+
         private void createSpriteSheet()
         {
             if (obj.isOSB())
@@ -56,6 +98,9 @@ namespace Inti_creates_files_Reader
                 int frameCount = obj.frames.Size();
                 if (frameCount == 0) return;
 
+                DisposeSpriteSheetImages();
+                framePlacements.Clear();
+
                 int avgWidth = 0;
                 int avgHeight = 0;
                 for (int i = 0; i < frameCount; i++)
@@ -66,13 +111,14 @@ namespace Inti_creates_files_Reader
                     int eh = center.Y < 0 ? frm.Height - center.Y : Math.Max(frm.Height, center.Y + 1);
                     avgWidth += ew;
                     avgHeight += eh;
+                    frm.Dispose();
                 }
                 avgWidth /= frameCount;
                 avgHeight /= frameCount;
 
                 int cols = Math.Max(1, (int)Math.Ceiling(Math.Sqrt((double)frameCount * avgWidth / avgHeight)));
                 cols = Math.Min(cols, frameCount);
-                maxWidth = cols * (avgWidth + 1);
+                maxWidth = cols * (avgWidth + FrameSpacing);
 
                 int currX = 0, currRowHeight = 0;
                 for (int i = 0; i < frameCount; i++)
@@ -83,18 +129,19 @@ namespace Inti_creates_files_Reader
                     int effectiveWidth = center.X < 0 ? frm.Width - center.X : Math.Max(frm.Width, center.X + 1);
                     int effectiveHeight = center.Y < 0 ? frm.Height - center.Y : Math.Max(frm.Height, center.Y + 1);
 
-                    if (maxWidth < currX + effectiveWidth + 1)
+                    if (maxWidth < currX + effectiveWidth + FrameSpacing)
                     {
-                        heightFix += currRowHeight + 1;
+                        heightFix += currRowHeight + FrameSpacing;
                         currRowHeight = 0;
                         currX = 0;
                     }
 
                     currRowHeight = Math.Max(currRowHeight, effectiveHeight);
-                    currX += effectiveWidth + 1;
+                    currX += effectiveWidth + FrameSpacing;
+                    frm.Dispose();
                 }
 
-                height = heightFix + currRowHeight + 1;
+                height = heightFix + currRowHeight + FrameSpacing;
                 width = maxWidth;
 
                 displayedBitmaps[0] = new Bitmap(width, height);
@@ -112,10 +159,10 @@ namespace Inti_creates_files_Reader
                     int effectiveWidth = center.X < 0 ? bmp.Width - center.X : Math.Max(bmp.Width, center.X + 1);
                     int effectiveHeight = center.Y < 0 ? bmp.Height - center.Y : Math.Max(bmp.Height, center.Y + 1);
 
-                    if (indexX + effectiveWidth + 1 > width)
+                    if (indexX + effectiveWidth + FrameSpacing > width)
                     {
                         indexX = 0;
-                        indexY += tempy + 1;
+                        indexY += tempy + FrameSpacing;
                         tempy = 0;
                     }
 
@@ -124,6 +171,7 @@ namespace Inti_creates_files_Reader
 
                     int drawX = indexX + leftPad;
                     int drawY = indexY + topPad;
+                    framePlacements.Add(new FramePlacement(i, drawX, drawY, bmp.Width, bmp.Height, center.X, center.Y));
 
                     // Background
                     using (Graphics g = Graphics.FromImage(displayedBitmaps[0]))
@@ -141,12 +189,15 @@ namespace Inti_creates_files_Reader
                         displayedBitmaps[2].SetPixel(dotX, dotY, centerColor.BackColor);
 
                     tempy = Math.Max(tempy, effectiveHeight);
-                    indexX += effectiveWidth + 1;
+                    indexX += effectiveWidth + FrameSpacing;
+                    bmp.Dispose();
                 }
             }
             else
             {
-                displayedBitmaps[1] = obj.spritesheet.getImage();
+                DisposeSpriteSheetImages();
+                framePlacements.Clear();
+                displayedBitmaps[1] = new Bitmap(obj.spritesheet.getImage());
                 is_visible[0] = false;
                 is_visible[2] = false;
             }
@@ -161,14 +212,14 @@ namespace Inti_creates_files_Reader
                 return;
             if (is_visible[1])
             {
-                if (pltIndex == -1) displayedBitmaps[1] = uncolored;
-                else displayedBitmaps[1] = obj.applyColor(ref uncolored, pltIndex);
+                if (pltIndex == -1) ReplaceSpriteBitmap(uncolored);
+                else ReplaceSpriteBitmap(obj.applyColor(ref uncolored, pltIndex));
             }
             else
             {
                 Bitmap bmp = obj.spritesheet.getImage();
-                if (pltIndex == -1) displayedBitmaps[1] = bmp;
-                else displayedBitmaps[1] = obj.applyColor(ref bmp, pltIndex);
+                if (pltIndex == -1) ReplaceSpriteBitmap(new Bitmap(bmp));
+                else ReplaceSpriteBitmap(obj.applyColor(ref bmp, pltIndex));
             }
             displaySpriteSheet();
         }
@@ -213,7 +264,9 @@ namespace Inti_creates_files_Reader
                             graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
                     }
                 }
+                Image? previous = picPalatte.Image;
                 picPalatte.Image = plt;
+                previous?.Dispose();
             }
 
         }
@@ -251,7 +304,9 @@ namespace Inti_creates_files_Reader
                     graphics.DrawImage(displayedBitmaps[1], 0, 0);
                 }
             }
+            Image? previous = pic.Image;
             pic.Image = bmp;
+            previous?.Dispose();
             pic.SizeMode = PictureBoxSizeMode.Zoom;
         }
 
@@ -267,6 +322,7 @@ namespace Inti_creates_files_Reader
                 Properties.Settings.Default.Save();
 
                 pic.Image.Save(saveFileDialog.FileName);
+                SaveFrameMetadata(saveFileDialog.FileName);
             }
 
         }
@@ -293,6 +349,7 @@ namespace Inti_creates_files_Reader
                             displayedBitmaps[i].Save(Path.Combine(folder.SelectedPath, obj.name + "_centerpoints.png"));
                     }
                 }
+                SaveFrameMetadata(Path.Combine(folder.SelectedPath, obj.name + "_spriteSheet.png"));
             }
 
         }
@@ -312,8 +369,18 @@ namespace Inti_creates_files_Reader
         }
         private void Sprite_Click(object sender, EventArgs e)
         {
-            if (is_visible[1]) displayedBitmaps[1] = obj.spritesheet.getImage();
-            else displayedBitmaps[1] = uncolored;
+            if (is_visible[1])
+            {
+                ReplaceSpriteBitmap(new Bitmap(obj.spritesheet.getImage()));
+                LviewMode.Text = "View: Original Atlas";
+                button1.Text = "Show Reconstructed";
+            }
+            else
+            {
+                ReplaceSpriteBitmap(uncolored);
+                LviewMode.Text = "View: Reconstructed Frames";
+                button1.Text = "Show Original Atlas";
+            }
             is_visible[1] = !is_visible[1];
             displaySpriteSheet();
 
@@ -411,13 +478,93 @@ namespace Inti_creates_files_Reader
         {
             if (is_visible[1]){
                 obj.frames.FlipO();
-                foreach (var bmp in displayedBitmaps)
-                    bmp?.Dispose();
-
                 createSpriteSheet();
                 pic.Invalidate();
             }
             
+        }
+
+        private void Nspacing_ValueChanged(object sender, EventArgs e)
+        {
+            if (obj.isOSB())
+            {
+                is_visible[1] = true;
+                LviewMode.Text = "View: Reconstructed Frames";
+                button1.Text = "Show Original Atlas";
+                createSpriteSheet();
+            }
+        }
+
+        private void SaveFrameMetadata(string spriteSheetPath)
+        {
+            if (!obj.isOSB() || !is_visible[1]) return;
+
+            string basePath = Path.Combine(
+                Path.GetDirectoryName(spriteSheetPath) ?? "",
+                Path.GetFileNameWithoutExtension(spriteSheetPath));
+
+            var animations = obj.animations.Select((animation, animationIndex) => new
+            {
+                index = animationIndex,
+                length = animation.getLength(),
+                frames = Enumerable.Range(0, animation.Size()).Select(sequenceIndex => new
+                {
+                    sequenceIndex,
+                    frameIndex = animation.getFrame(sequenceIndex),
+                    time = animation.getTime(sequenceIndex)
+                })
+            });
+
+            var metadata = new
+            {
+                file = obj.getName(),
+                view = "Reconstructed Frames",
+                spacing = FrameSpacing,
+                sheet = new { width = displayedBitmaps[1].Width, height = displayedBitmaps[1].Height },
+                frames = framePlacements.Select(frame => new
+                {
+                    index = frame.Index,
+                    x = frame.X,
+                    y = frame.Y,
+                    width = frame.Width,
+                    height = frame.Height,
+                    centerX = frame.CenterX,
+                    centerY = frame.CenterY
+                }),
+                animations
+            };
+
+            File.WriteAllText(basePath + ".json", JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true }));
+
+            var csv = new StringBuilder("FrameIndex,X,Y,Width,Height,CenterX,CenterY,AnimationUses\r\n");
+            foreach (FramePlacement frame in framePlacements)
+            {
+                string uses = string.Join(";", obj.animations.SelectMany((animation, animationIndex) =>
+                    Enumerable.Range(0, animation.Size())
+                        .Where(sequenceIndex => animation.getFrame(sequenceIndex) == frame.Index)
+                        .Select(sequenceIndex => $"{animationIndex}:{sequenceIndex}")));
+                csv.AppendLine(string.Join(",", new[]
+                {
+                    frame.Index.ToString(CultureInfo.InvariantCulture),
+                    frame.X.ToString(CultureInfo.InvariantCulture),
+                    frame.Y.ToString(CultureInfo.InvariantCulture),
+                    frame.Width.ToString(CultureInfo.InvariantCulture),
+                    frame.Height.ToString(CultureInfo.InvariantCulture),
+                    frame.CenterX.ToString(CultureInfo.InvariantCulture),
+                    frame.CenterY.ToString(CultureInfo.InvariantCulture),
+                    $"\"{uses}\""
+                }));
+            }
+            File.WriteAllText(basePath + ".csv", csv.ToString());
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            DisposeSpriteSheetImages();
+            Image? palette = picPalatte.Image;
+            picPalatte.Image = null;
+            palette?.Dispose();
+            base.OnFormClosed(e);
         }
     }
 }

@@ -54,8 +54,10 @@ namespace Inti_creates_files_Reader
         }
         public void readAnimation(ref byte[] data, int offset, int index, int framesSize)
         {
-            int Sanimation1 = BitConverter.ToInt32(data, offset + (index * 0x1c)); //0x1c
-            AnimationLength = BitConverter.ToSingle(data, offset + 0x8 + (index * Sanimation1));
+            int Sanimation1 = BinaryData.ReadInt32(data, offset + (index * 0x1c), $"animation {index} record size"); //0x1c
+            if (Sanimation1 <= 0)
+                throw new InvalidDataException($"Animation {index} has an invalid record size: {Sanimation1}.");
+            AnimationLength = BinaryData.ReadSingle(data, offset + 0x8 + (index * Sanimation1), $"animation {index} length");
             //Banimation2 = Banimation1 + Sanimation1;
             //Sanimation2 = NAnimation * BitConverter.ToInt32(data, Banimation2);//0x48 or 0x3c
 
@@ -65,11 +67,17 @@ namespace Inti_creates_files_Reader
 
 
             // Banimation1 + 0x8 = animation length;
-            int index2 = BitConverter.ToInt32(data, offset + 0x18 + (index * Sanimation1));
+            int index2 = BinaryData.ReadInt32(data, offset + 0x18 + (index * Sanimation1), $"animation {index} data pointer");
 
-            int index3 = BitConverter.ToInt32(data, index2 + 0x10);
-            int Sdata3 = BitConverter.ToInt32(data, index3);
-            int Sanimation = BitConverter.ToInt32(data, index3 + 0x4);
+            int index3 = BinaryData.ReadInt32(data, index2 + 0x10, $"animation {index} keyframe pointer");
+            int Sdata3 = BinaryData.ReadInt32(data, index3, $"animation {index} keyframe size");
+            int Sanimation = BinaryData.ReadInt32(data, index3 + 0x4, $"animation {index} keyframe count");
+            if (Sdata3 < 0xc || Sanimation < 0 || Sanimation > 1_000_000)
+                throw new InvalidDataException($"Animation {index} has an invalid keyframe table.");
+            long keyframeEnd = (long)index3 + Sanimation * Sdata3 + 0xc;
+            if (keyframeEnd > int.MaxValue)
+                throw new InvalidDataException($"Animation {index} keyframe table is too large.");
+            BinaryData.EnsureRange(data, index3, (int)(keyframeEnd - index3), $"animation {index} keyframes");
 
             for (int j = 1; j <= Sanimation; j++)
             {

@@ -45,6 +45,14 @@ namespace Inti_creates_files_Reader
             centers.Add(center);
         }
 
+        public void DisposeImages()
+        {
+            foreach (Bitmap frame in frames)
+                frame.Dispose();
+            frames.Clear();
+            centers.Clear();
+        }
+
         public bool getFlip()
         {
             return Flip;
@@ -101,7 +109,13 @@ namespace Inti_creates_files_Reader
 
         public void readFrames(ref byte[] data, Bitmap bmp, int index, string name)
         {
-            int size = BitConverter.ToInt32(data, index);
+            int size = BinaryData.ReadInt32(data, index, "frame count");
+            if (size < 0 || size > 1_000_000)
+                throw new InvalidDataException($"Invalid frame count: {size}.");
+            long headerLength = 0xcL + size * 0x18L;
+            if (headerLength > int.MaxValue)
+                throw new InvalidDataException("Frame table is too large.");
+            BinaryData.EnsureRange(data, index, (int)headerLength, "frame table");
             int offset;
             offset = 0xc;
 
@@ -113,6 +127,8 @@ namespace Inti_creates_files_Reader
             { // header
                 frameIndex[i, 0] = BitConverter.ToInt32(data, index + offset) + (index + offset);
                 frameIndex[i, 1] = BitConverter.ToInt32(data, index + offset + 0x8);
+                if (frameIndex[i, 1] < 0 || frameIndex[i, 1] % 4 != 0)
+                    throw new InvalidDataException($"Frame {i} has an invalid vertex count: {frameIndex[i, 1]}.");
 
                 offset += 0x18;
             }
@@ -131,6 +147,10 @@ namespace Inti_creates_files_Reader
                 int xMin = 0, yMin = 0, xMax = 0, yMax = 0;
 
                 offset = frameIndex[i, 0];
+                long vertexLength = frameIndex[i, 1] * 0x14L;
+                if (vertexLength > int.MaxValue)
+                    throw new InvalidDataException($"Frame {i} vertex data is too large.");
+                BinaryData.EnsureRange(data, offset - 0x8, (int)vertexLength, $"frame {i} vertices");
 
                 for (int j = 0; j < frameIndex[i, 1]; j++)
                 { // get all points for a single Image
@@ -171,8 +191,12 @@ namespace Inti_creates_files_Reader
                         yMax = centers[i].Y - frameYMax;
 
                         Rectangle sourceRect = new Rectangle(po1, po2, po3 - po1, po4 - po2);
+                        if (sourceRect.Width <= 0 || sourceRect.Height <= 0 ||
+                            sourceRect.X < 0 || sourceRect.Y < 0 ||
+                            sourceRect.Right > bmp.Width || sourceRect.Bottom > bmp.Height)
+                            throw new InvalidDataException($"Frame {i} references pixels outside the sprite sheet.");
 
-                        Bitmap croppedBitmap = bmp.Clone(sourceRect, bmp.PixelFormat);
+                        using Bitmap croppedBitmap = bmp.Clone(sourceRect, bmp.PixelFormat);
 
                         if (oPoint[k + 2].X > oPoint[k].X) croppedBitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
                         if (oPoint[k + 2].Y > oPoint[k].Y) croppedBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);

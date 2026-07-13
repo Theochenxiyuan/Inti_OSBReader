@@ -122,15 +122,33 @@ namespace Inti_creates_files_Reader
             AnimationList.Items.Clear();
             Lpalletecount.Text = "0 out of 0";
             pltIndex = -1;
+            picPalatte.Image?.Dispose();
             picPalatte.Image = null;
             pic.Image = null;
             frameIndex = 0;
+            frame?.Dispose();
             frame = null;
             animationIndex = 0;
             TcurrFrame.Text = "";
 
-            obj = new OSB(fileName);
-            obj.readData();
+            try
+            {
+                obj = new OSB(fileName);
+                obj.readData();
+            }
+            catch (Exception ex)
+            {
+                currentFilePath = "";
+                Text = "Inti OSB Reader";
+                SetControlsEnabled(false);
+                statusLabel.Text = "Failed to load " + Path.GetFileName(fileName);
+                MessageBox.Show(
+                    $"Could not read '{Path.GetFileName(fileName)}'.\n\n{ex.Message}",
+                    "Invalid or unsupported file",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
             if (obj.isOSB())
             {
                 for (int i = 0; i < obj.animations.Count(); i++)
@@ -517,7 +535,7 @@ namespace Inti_creates_files_Reader
                 Properties.Settings.Default.pathOpen = Path.GetDirectoryName(dialog.FileName);
                 Properties.Settings.Default.Save();
                 AddExternalPaletteForCurrentFile(dialog.FileName);
-                ApplyExternalPalettes(GetCurrentExternalPalettes());
+                ApplyExternalPalettes(new List<string> { dialog.FileName });
                 UpdatePaletteSourceLabel();
                 RenderCurrentFrame();
             }
@@ -541,10 +559,21 @@ namespace Inti_creates_files_Reader
             {
                 if (!File.Exists(palettePath)) continue;
 
-                OSB obj2 = new OSB(palettePath);
-                obj2.plts = obj.plts;
-                obj2.readData();
-                obj.plts = obj2.plts;
+                try
+                {
+                    OSB obj2 = new OSB(palettePath);
+                    obj2.plts = obj.plts;
+                    obj2.readData();
+                    obj.plts = obj2.plts;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Could not read palette '{Path.GetFileName(palettePath)}'.\n\n{ex.Message}",
+                        "Invalid external palette",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
             }
 
             if (obj.plts.Size() != 0)
@@ -653,6 +682,8 @@ namespace Inti_creates_files_Reader
         {
             animationTimer.Stop();
             pic.Image = null;
+            frame?.Dispose();
+            frame = null;
 
             animationIndex = index;
             frameIndex = 0;
@@ -710,7 +741,9 @@ namespace Inti_creates_files_Reader
                 return;
 
             TcurrFrame.Text = obj.animations[animationIndex].getFrame(frameIndex).ToString();
-            frame = obj.getFrameCentered(animationIndex, sourceFrame, pltIndex);
+            Image nextFrame = obj.getFrameCentered(animationIndex, sourceFrame, pltIndex);
+            frame?.Dispose();
+            frame = nextFrame;
 
             pic.Invalidate();
             pic.Update();
@@ -857,7 +890,9 @@ namespace Inti_creates_files_Reader
                             graphics.FillRectangle(brush, x * (picPalatte.Width / oplt.Width), y * (picPalatte.Height / oplt.Height), (picPalatte.Width / oplt.Width), (picPalatte.Height / oplt.Height));
                     }
                 }
+                Image? previous = picPalatte.Image;
                 picPalatte.Image = plt;
+                previous?.Dispose();
             }
         }
 
@@ -1052,6 +1087,85 @@ namespace Inti_creates_files_Reader
 
         }
 
+        private void savePaletteSheetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (obj.plts.Size() == 0) return;
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.InitialDirectory = Properties.Settings.Default.PathSave;
+            saveFileDialog.Filter = "PNG image (*.png)|*.png";
+            saveFileDialog.FileName = obj.name + "_palette_sheet.png";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                Properties.Settings.Default.PathSave = Path.GetDirectoryName(saveFileDialog.FileName);
+                Properties.Settings.Default.Save();
+
+                using Bitmap sheet = CreatePaletteSheet();
+                sheet.Save(saveFileDialog.FileName);
+            }
+        }
+
+        private Bitmap CreatePaletteSheet()
+        {
+            const int columns = 16;
+            const int cellSize = 16;
+            const int padding = 8;
+            const int titleHeight = 20;
+            const int sectionGap = 8;
+
+            var palettes = new List<(string Name, Bitmap Palette)> { ("Base palette", obj.plts.getPalette(-1)) };
+            for (int i = 0; i < obj.plts.Size(); i++)
+                palettes.Add(($"Palette {i + 1}", obj.plts.getPalette(i)));
+
+            var visiblePalettes = palettes.Select(palette =>
+            {
+                var colors = new List<Color>();
+                for (int y = 0; y < palette.Palette.Height; y++)
+                {
+                    for (int x = 0; x < palette.Palette.Width; x++)
+                    {
+                        Color color = palette.Palette.GetPixel(x, y);
+                        if (color.A > 0)
+                            colors.Add(color);
+                    }
+                }
+                return (palette.Name, Colors: colors);
+            }).ToList();
+
+            int height = padding;
+            foreach (var palette in visiblePalettes)
+            {
+                int rows = (int)Math.Ceiling((double)palette.Colors.Count / columns);
+                height += titleHeight + rows * cellSize + sectionGap;
+            }
+
+            Bitmap sheet = new Bitmap(padding * 2 + columns * cellSize, height);
+            using Graphics graphics = Graphics.FromImage(sheet);
+            graphics.Clear(Color.White);
+
+            int y = padding;
+            foreach (var palette in visiblePalettes)
+            {
+                TextRenderer.DrawText(graphics, palette.Name, Font, new Point(padding, y), Color.Black);
+                y += titleHeight;
+
+                for (int colorIndex = 0; colorIndex < palette.Colors.Count; colorIndex++)
+                {
+                    int x = padding + (colorIndex % columns) * cellSize;
+                    int cellY = y + (colorIndex / columns) * cellSize;
+                    using Brush brush = new SolidBrush(palette.Colors[colorIndex]);
+                    graphics.FillRectangle(brush, x, cellY, cellSize, cellSize);
+                    graphics.DrawRectangle(Pens.LightGray, x, cellY, cellSize - 1, cellSize - 1);
+                }
+
+                int rows = (int)Math.Ceiling((double)palette.Colors.Count / columns);
+                y += rows * cellSize + sectionGap;
+            }
+
+            return sheet;
+        }
+
         public void ExportGif(int animation, string path)
         {
             int frameCount = obj.animations[animation].Size();
@@ -1110,6 +1224,17 @@ namespace Inti_creates_files_Reader
         private void BspriteSheet_Click(object sender, EventArgs e)
         {
             spriteSheetToolStripMenuItem_Click(sender, e);
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            animationTimer.Stop();
+            filterTimer.Stop();
+            frame?.Dispose();
+            frame = null;
+            picPalatte.Image?.Dispose();
+            picPalatte.Image = null;
+            base.OnFormClosed(e);
         }
     }
 }

@@ -41,6 +41,7 @@
             saveAllAnimationsToolStripMenuItem = new ToolStripMenuItem();
             savePaletteToolStripMenuItem = new ToolStripMenuItem();
             saveAllPaletteToolStripMenuItem1 = new ToolStripMenuItem();
+            savePaletteSheetToolStripMenuItem = new ToolStripMenuItem();
             saveToolStripMenuItem = new ToolStripMenuItem();
             documnetedDataToolStripMenuItem = new ToolStripMenuItem();
             allToolStripMenuItem = new ToolStripMenuItem();
@@ -163,7 +164,7 @@
             // saveAllPaletteToolStripMenuItem
 
             //
-            saveAllPaletteToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { saveAnimationToolStripMenuItem, saveAllAnimationsToolStripMenuItem, savePaletteToolStripMenuItem, saveAllPaletteToolStripMenuItem1 });
+            saveAllPaletteToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { saveAnimationToolStripMenuItem, saveAllAnimationsToolStripMenuItem, savePaletteToolStripMenuItem, saveAllPaletteToolStripMenuItem1, savePaletteSheetToolStripMenuItem });
             saveAllPaletteToolStripMenuItem.Name = "saveAllPaletteToolStripMenuItem";
             saveAllPaletteToolStripMenuItem.Size = new Size(228, 22);
             saveAllPaletteToolStripMenuItem.Text = "Save";
@@ -203,6 +204,13 @@
             saveAllPaletteToolStripMenuItem1.Size = new Size(255, 22);
             saveAllPaletteToolStripMenuItem1.Text = "All Color Palettes";
             saveAllPaletteToolStripMenuItem1.Click += saveAllPaletteToolStripMenuItem1_Click;
+            //
+            // savePaletteSheetToolStripMenuItem
+            //
+            savePaletteSheetToolStripMenuItem.Name = "savePaletteSheetToolStripMenuItem";
+            savePaletteSheetToolStripMenuItem.Size = new Size(255, 22);
+            savePaletteSheetToolStripMenuItem.Text = "Palette Sheet PNG";
+            savePaletteSheetToolStripMenuItem.Click += savePaletteSheetToolStripMenuItem_Click;
             //
             // saveToolStripMenuItem
             //
@@ -694,6 +702,7 @@
         private ToolStripMenuItem saveAllAnimationsToolStripMenuItem;
         private ToolStripMenuItem savePaletteToolStripMenuItem;
         private ToolStripMenuItem saveAllPaletteToolStripMenuItem1;
+        private ToolStripMenuItem savePaletteSheetToolStripMenuItem;
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem documnetedDataToolStripMenuItem;
         private ToolStripMenuItem allToolStripMenuItem;

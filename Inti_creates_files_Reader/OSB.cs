@@ -55,21 +55,37 @@ namespace Inti_creates_files_Reader
         private Point FrameMax;
 
         public OSB(string filePath){
-            if (File.Exists(filePath))
-            {
-                data = File.ReadAllBytes(filePath);
-                name = Path.GetFileName(filePath);
-                animations = new List<Animation>();
-                frames = new Frames();
-                plts = new ColorPalettes();
-                centerMax = new Point();
-                FrameMax = new Point();
-                is_OSB = true;
-            }
+            data = Array.Empty<byte>();
+            name = "";
+            animations = new List<Animation>();
+            frames = new Frames();
+            plts = new ColorPalettes();
+            centerMax = new Point();
+            FrameMax = new Point();
+            is_OSB = true;
+
+            // MainPage creates an empty placeholder before a file is selected.
+            if (string.IsNullOrEmpty(filePath))
+                return;
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("OSB/SCB file was not found.", filePath);
+
+            data = File.ReadAllBytes(filePath);
+            name = Path.GetFileName(filePath);
         }
 
         public void readData(){
-            SHeader = BitConverter.ToInt32(data, 0x0);
+            SHeader = BinaryData.ReadInt32(data, 0x0, "file header");
+            int minimumHeaderSize = SHeader switch
+            {
+                0x38 => 0x2c,
+                0x60 => 0x54,
+                0x6c => 0x6c,
+                0x8c => 0x84,
+                _ => throw new InvalidDataException($"Unsupported OSB/SCB header: 0x{SHeader:X}.")
+            };
+            BinaryData.EnsureRange(data, 0, minimumHeaderSize, "file header");
             if(SHeader == 0x6c) {
                 SFramesData = BitConverter.ToInt32(data, 0x18);
                 BFrameData = BitConverter.ToInt32(data, 0x1c);
@@ -79,6 +95,7 @@ namespace Inti_creates_files_Reader
                 //0x28 related to frames(same length) still unknown what this data do
 
                 IHSpritesheet = BitConverter.ToInt32(data, 0x4c);
+                BinaryData.EnsureRange(data, IHSpritesheet, 0x14, "sprite sheet header");
                 Size = BitConverter.ToInt32(data, 0x50);//50 & 54 & 58 & 5c
                 SPalette = BitConverter.ToInt32(data, 0x60);
                 BPaletteOriginal = BitConverter.ToInt32(data, 0x64);
@@ -117,11 +134,12 @@ namespace Inti_creates_files_Reader
                 BPaletteOriginal = BitConverter.ToInt32(data, 0x74);
                 BPaletteDataModified = BitConverter.ToInt32(data, 0x80);
 
+                ValidateSpriteSheet();
+
                 plts.readPaletteSCB(ref data);
 
                 spritesheet = new Sprite(spriteSheetWidth, spriteSheetHeight);
                 spritesheet.readImage(ref data, BSpriteSheet);
-                spritesheet.getImage().Save("C:\\Users\\Hasan\\Downloads\\S\\a.png");
 
             }else if( SHeader == 0x60)
             {
@@ -133,6 +151,7 @@ namespace Inti_creates_files_Reader
                 
 
                 IHSpritesheet = BitConverter.ToInt32(data, 0x4c);
+                BinaryData.EnsureRange(data, IHSpritesheet, 0x14, "sprite sheet header");
                 Size = BitConverter.ToInt32(data, 0x50);//50 & 54 & 58 & 5c
 
                 //spritesheet header
@@ -142,6 +161,9 @@ namespace Inti_creates_files_Reader
                 spriteSheetWidth = BitConverter.ToInt32(data, IHSpritesheet + 0xc);
                 spriteSheetHeight = BitConverter.ToInt32(data, IHSpritesheet + 0x10);
             }
+
+            if (NFrames < 0 || NFrames > 1_000_000 || NAnimation < 0 || NAnimation > 1_000_000)
+                throw new InvalidDataException("Frame or animation count is outside the supported range.");
 
             if (SPalette != 0)
             {
@@ -153,11 +175,14 @@ namespace Inti_creates_files_Reader
 
             if (SSpritesheet != 0)
             {
+                ValidateSpriteSheet();
                 spritesheet = new Sprite(spriteSheetWidth, spriteSheetHeight);
                 spritesheet.readImage(ref data, BSpriteSheet);
             }
             if(NFrames != 0)
             {
+                if (spritesheet == null)
+                    throw new InvalidDataException("Frame data is present but the sprite sheet is missing.");
                 frames = new Frames();
                 frames.readFrames(ref data, spritesheet.getImage(), BFrameData,name);
             }
@@ -174,17 +199,31 @@ namespace Inti_creates_files_Reader
                     a.readAnimation(ref data, SHeader, i, frames.Size());
                     for(int j = 0;j < a.Size(); j++)
                     {
-                        aniFrame.addFrame(frames.getFrame(a.getFrame(j)), frames.getCenter(a.getFrame(j)));
+                        int frameIndex = a.getFrame(j);
+                        if (frameIndex >= 0 && frameIndex < frames.Size())
+                            aniFrame.addFrame(frames.getFrame(frameIndex), frames.getCenter(frameIndex));
                     }
                     
 
                     a.getMaxCentered(ref aniFrame);
+                    aniFrame.DisposeImages();
                     animations.Add(a);
                 }
             }
 
             
         }
+        private void ValidateSpriteSheet()
+        {
+            if (spriteSheetWidth <= 0 || spriteSheetHeight <= 0 || spriteSheetWidth > 32768 || spriteSheetHeight > 32768)
+                throw new InvalidDataException($"Invalid sprite sheet dimensions: {spriteSheetWidth}x{spriteSheetHeight}.");
+
+            long byteCount = (long)spriteSheetWidth * spriteSheetHeight * 4;
+            if (byteCount > int.MaxValue)
+                throw new InvalidDataException("Sprite sheet pixel data is too large.");
+            BinaryData.EnsureRange(data, BSpriteSheet, (int)byteCount, "sprite sheet pixels");
+        }
+
         public bool isOSB()
         {
             return is_OSB;
@@ -209,7 +248,7 @@ namespace Inti_creates_files_Reader
         {
             if (frameIndex < 0 || frameIndex >= frames.Size())
                 return null;
-            Bitmap bmp = new Bitmap(frames.getFrame(frameIndex));    
+            Bitmap bmp = frames.getFrame(frameIndex);
             Bitmap plt = plts.getPalette(paletteIndex);
             Color color;
 
@@ -289,6 +328,8 @@ namespace Inti_creates_files_Reader
 
                 g.DrawImage(frameBmp, drawX, drawY);
             }
+
+            frameBmp.Dispose();
 
             return bmp;
         }

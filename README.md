@@ -25,6 +25,10 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 - **Export GIF button** — Explicit "GIF" button instead of hidden click-on-preview behavior
 - **Sprite Sheet button** — Open sprite sheet view from the toolbar
 - **Sprite Sheet window** — Title shows filename, Save PNG is an explicit button
+- **Atlas/reconstruction views** — Clearly switch between the original atlas and frames reconstructed from OSB data
+- **Temporary frame spacing** — Adjust reconstructed frame spacing from 0–100 px without changing the source file or saved settings
+- **Frame metadata sidecars** — Saving a reconstructed sprite sheet also exports JSON and CSV with frame rectangles, centers, and animation usage
+- **Palette Sheet PNG** — Export the base palette and all loaded palettes as a readable color-swatch image, omitting fully transparent entries
 - **Tooltips** — On palette buttons, Flip, Pause/Play, GIF, and Sprite buttons
 - **Disabled controls when no file loaded** — Prevents accidental clicks on save/view actions
 
@@ -41,6 +45,8 @@ The fork focuses on improving the user experience for day-to-day use while keepi
 - **`SolidBrush` leak** — Brushes created in a loop were never disposed in `displayPallete`
 - **Open file dialog filter** — Malformed filter string caused a broken filter entry
 - **Tspeed save** — No longer writes to settings every 10ms; saves on focus leave with min value 1
+- **Safer malformed-file handling** — Validates headers, offsets, dimensions, frame vertices, animation tables, palettes, and pixel ranges before reading
+- **Bitmap cleanup** — Releases temporary frames, sprite-sheet layers, previews, and cropped frame sections when replaced
 
 ### Typo Fixes
 - Menu: `Documneted data` → `Documented data`

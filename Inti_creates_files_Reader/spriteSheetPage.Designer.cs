@@ -52,11 +52,15 @@ namespace Inti_creates_files_Reader
             button3 = new Button();
             button4 = new Button();
             BsavePng = new Button();
+            Lspacing = new Label();
+            Nspacing = new NumericUpDown();
+            LviewMode = new Label();
             ((System.ComponentModel.ISupportInitialize)pic).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picPalatte).BeginInit();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)backgroundColor).BeginInit();
             ((System.ComponentModel.ISupportInitialize)centerColor).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)Nspacing).BeginInit();
             SuspendLayout();
             // 
             // pic
@@ -144,9 +148,9 @@ namespace Inti_creates_files_Reader
             button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button1.Location = new Point(999, 95);
             button1.Name = "button1";
-            button1.Size = new Size(84, 23);
+            button1.Size = new Size(135, 23);
             button1.TabIndex = 107;
-            button1.Text = "Sprite arranged/optimized";
+            button1.Text = "Show Original Atlas";
             button1.UseVisualStyleBackColor = true;
             button1.Click += Sprite_Click;
             // 
@@ -277,12 +281,46 @@ namespace Inti_creates_files_Reader
             BsavePng.Text = "Save PNG";
             BsavePng.UseVisualStyleBackColor = true;
             BsavePng.Click += Save_Click;
-            // 
+            //
+            // Lspacing
+            //
+            Lspacing.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            Lspacing.AutoSize = true;
+            Lspacing.Location = new Point(999, 264);
+            Lspacing.Name = "Lspacing";
+            Lspacing.Size = new Size(75, 15);
+            Lspacing.TabIndex = 112;
+            Lspacing.Text = "Spacing (px):";
+            //
+            // Nspacing
+            //
+            Nspacing.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            Nspacing.Location = new Point(1089, 260);
+            Nspacing.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            Nspacing.Name = "Nspacing";
+            Nspacing.Size = new Size(45, 23);
+            Nspacing.TabIndex = 113;
+            Nspacing.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            Nspacing.ValueChanged += Nspacing_ValueChanged;
+            //
+            // LviewMode
+            //
+            LviewMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            LviewMode.AutoSize = true;
+            LviewMode.Location = new Point(795, 39);
+            LviewMode.Name = "LviewMode";
+            LviewMode.Size = new Size(155, 15);
+            LviewMode.TabIndex = 114;
+            LviewMode.Text = "View: Reconstructed Frames";
+            //
             // spriteSheetPage
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1146, 690);
+            Controls.Add(LviewMode);
+            Controls.Add(Nspacing);
+            Controls.Add(Lspacing);
             Controls.Add(button4);
             Controls.Add(BsavePng);
             Controls.Add(centerColor);
@@ -309,6 +347,7 @@ namespace Inti_creates_files_Reader
             menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)backgroundColor).EndInit();
             ((System.ComponentModel.ISupportInitialize)centerColor).EndInit();
+            ((System.ComponentModel.ISupportInitialize)Nspacing).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -337,5 +376,8 @@ namespace Inti_creates_files_Reader
         private Button button3;
         private Button button4;
         private Button BsavePng;
+        private Label Lspacing;
+        private NumericUpDown Nspacing;
+        private Label LviewMode;
     }
 }

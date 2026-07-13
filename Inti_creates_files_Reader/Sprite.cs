@@ -27,6 +27,11 @@ namespace Inti_creates_files_Reader
 
         public void readImage(ref byte[] data, int index)
         {
+            long byteCount = (long)image.Width * image.Height * 4;
+            if (byteCount > int.MaxValue)
+                throw new InvalidDataException("Sprite sheet is too large.");
+            BinaryData.EnsureRange(data, index, (int)byteCount, "sprite sheet pixels");
+
             int offset = 0;
 
             for (int y = 0; y < image.Height; y++)
